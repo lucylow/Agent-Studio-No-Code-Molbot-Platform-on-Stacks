@@ -5,12 +5,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import WalletConnect from "@/components/WalletConnect";
+import NetworkStatus from "@/components/NetworkStatus";
 
 const navLinks = [
   { to: "/", label: "Home" },
   { to: "/marketplace", label: "Marketplace" },
   { to: "/swarms", label: "Swarms" },
   { to: "/nfts", label: "NFTs" },
+  { to: "/architecture", label: "Architecture" },
   { to: "/docs", label: "Docs" },
   { to: "/bounties", label: "Bounties" },
   { to: "/governance", label: "DAO" },
@@ -39,6 +41,7 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden lg:flex items-center gap-0.5">
+          <NetworkStatus />
           {navLinks.map((link) => (
             <Link
               key={link.to}

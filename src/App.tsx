@@ -17,6 +17,7 @@ import Swarms from "./pages/Swarms.tsx";
 import NFTGallery from "./pages/NFTGallery.tsx";
 import Impact from "./pages/Impact.tsx";
 import Governance from "./pages/Governance.tsx";
+import Architecture from "./pages/Architecture.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
                   <Route path="/nfts" element={<NFTGallery />} />
                   <Route path="/impact" element={<Impact />} />
                   <Route path="/governance" element={<Governance />} />
+                  <Route path="/architecture" element={<Architecture />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
