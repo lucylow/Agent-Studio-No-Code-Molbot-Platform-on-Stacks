@@ -112,7 +112,7 @@ async function authenticateUser(req: Request, supabaseUrl: string, supabaseAnonK
 // ========== Route Handlers ==========
 
 type RouteContext = {
-  supabase: ReturnType<typeof createClient>;
+  supabase: any;
   userId: string | null;
   body: Record<string, unknown>;
   url: URL;
