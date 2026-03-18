@@ -41,6 +41,7 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden lg:flex items-center gap-0.5">
+          <NetworkStatus />
           {navLinks.map((link) => (
             <Link
               key={link.to}
