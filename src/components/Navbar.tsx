@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import WalletConnect from "@/components/WalletConnect";
+import NetworkStatus from "@/components/NetworkStatus";
 
 const navLinks = [
   { to: "/", label: "Home" },
