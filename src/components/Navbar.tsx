@@ -12,6 +12,7 @@ const navLinks = [
   { to: "/marketplace", label: "Marketplace" },
   { to: "/swarms", label: "Swarms" },
   { to: "/nfts", label: "NFTs" },
+  { to: "/architecture", label: "Architecture" },
   { to: "/docs", label: "Docs" },
   { to: "/bounties", label: "Bounties" },
   { to: "/governance", label: "DAO" },
