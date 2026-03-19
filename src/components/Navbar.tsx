@@ -9,6 +9,8 @@ import NetworkStatus from "@/components/NetworkStatus";
 
 const navLinks = [
   { to: "/", label: "Home" },
+  { to: "/simulator", label: "Simulator" },
+  { to: "/x402", label: "x402" },
   { to: "/marketplace", label: "Marketplace" },
   { to: "/swarms", label: "Swarms" },
   { to: "/nfts", label: "NFTs" },
@@ -18,9 +20,7 @@ const navLinks = [
   { to: "/team", label: "Team" },
   { to: "/api", label: "API" },
   { to: "/docs", label: "Docs" },
-  { to: "/bounties", label: "Bounties" },
   { to: "/governance", label: "DAO" },
-  { to: "/impact", label: "Impact" },
 ];
 
 const Navbar = () => {
