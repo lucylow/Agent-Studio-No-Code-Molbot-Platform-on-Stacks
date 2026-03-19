@@ -14,7 +14,444 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bots: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          on_chain_id: number | null
+          owner_id: string
+          price_amount: number
+          price_asset: string
+          price_model: string
+          skills: Json | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          on_chain_id?: number | null
+          owner_id: string
+          price_amount?: number
+          price_asset?: string
+          price_model?: string
+          skills?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          on_chain_id?: number | null
+          owner_id?: string
+          price_amount?: number
+          price_asset?: string
+          price_model?: string
+          skills?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dao_proposals: {
+        Row: {
+          action_amount: number | null
+          action_asset: string | null
+          action_recipient: string | null
+          against_votes: number
+          cancelled: boolean
+          created_at: string
+          description: string
+          end_block: number
+          executed: boolean
+          for_votes: number
+          id: number
+          proposal_id: number
+          proposal_type: string
+          proposer_id: string
+          start_block: number
+          title: string
+        }
+        Insert: {
+          action_amount?: number | null
+          action_asset?: string | null
+          action_recipient?: string | null
+          against_votes?: number
+          cancelled?: boolean
+          created_at?: string
+          description?: string
+          end_block?: number
+          executed?: boolean
+          for_votes?: number
+          id?: number
+          proposal_id: number
+          proposal_type?: string
+          proposer_id: string
+          start_block?: number
+          title: string
+        }
+        Update: {
+          action_amount?: number | null
+          action_asset?: string | null
+          action_recipient?: string | null
+          against_votes?: number
+          cancelled?: boolean
+          created_at?: string
+          description?: string
+          end_block?: number
+          executed?: boolean
+          for_votes?: number
+          id?: number
+          proposal_id?: number
+          proposal_type?: string
+          proposer_id?: string
+          start_block?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      dao_treasury: {
+        Row: {
+          asset: string
+          balance: number
+          id: number
+          total_deposited: number
+          total_withdrawn: number
+          updated_at: string
+        }
+        Insert: {
+          asset: string
+          balance?: number
+          id?: number
+          total_deposited?: number
+          total_withdrawn?: number
+          updated_at?: string
+        }
+        Update: {
+          asset?: string
+          balance?: number
+          id?: number
+          total_deposited?: number
+          total_withdrawn?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dao_votes: {
+        Row: {
+          created_at: string
+          id: number
+          proposal_id: number
+          support: boolean
+          voter_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          proposal_id: number
+          support: boolean
+          voter_id: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          proposal_id?: number
+          support?: boolean
+          voter_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dao_votes_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "dao_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          created_at: string
+          id: number
+          payment_tx_id: string | null
+          provider_bot_id: number | null
+          requester_bot_id: number | null
+          requester_user_id: string | null
+          result: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          payment_tx_id?: string | null
+          provider_bot_id?: number | null
+          requester_bot_id?: number | null
+          requester_user_id?: string | null
+          result?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          payment_tx_id?: string | null
+          provider_bot_id?: number | null
+          requester_bot_id?: number | null
+          requester_user_id?: string | null
+          result?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_provider_bot_id_fkey"
+            columns: ["provider_bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_requester_bot_id_fkey"
+            columns: ["requester_bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nft_tokens: {
+        Row: {
+          bot_id: number
+          burned: boolean
+          burned_at: string | null
+          id: number
+          metadata_uri: string | null
+          mint_fee: number
+          mint_fee_asset: string
+          mint_tx_id: string | null
+          minted_at: string
+          name: string
+          owner_id: string
+          token_id: number
+        }
+        Insert: {
+          bot_id: number
+          burned?: boolean
+          burned_at?: string | null
+          id?: number
+          metadata_uri?: string | null
+          mint_fee?: number
+          mint_fee_asset?: string
+          mint_tx_id?: string | null
+          minted_at?: string
+          name: string
+          owner_id: string
+          token_id: number
+        }
+        Update: {
+          bot_id?: number
+          burned?: boolean
+          burned_at?: string | null
+          id?: number
+          metadata_uri?: string | null
+          mint_fee?: number
+          mint_fee_asset?: string
+          mint_tx_id?: string | null
+          minted_at?: string
+          name?: string
+          owner_id?: string
+          token_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nft_tokens_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      swarm_jobs: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: number
+          payment_amount: number
+          payment_asset: string
+          payment_tx_id: string | null
+          result_hash: string | null
+          status: string
+          swarm_id: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: number
+          payment_amount?: number
+          payment_asset?: string
+          payment_tx_id?: string | null
+          result_hash?: string | null
+          status?: string
+          swarm_id: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: number
+          payment_amount?: number
+          payment_asset?: string
+          payment_tx_id?: string | null
+          result_hash?: string | null
+          status?: string
+          swarm_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swarm_jobs_swarm_id_fkey"
+            columns: ["swarm_id"]
+            isOneToOne: false
+            referencedRelation: "swarms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swarms: {
+        Row: {
+          created_at: string
+          creator_id: string
+          id: number
+          members: Json | null
+          min_bond: number
+          name: string
+          required_skills: Json | null
+          status: string
+          task_description: string | null
+          total_earned: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          id?: number
+          members?: Json | null
+          min_bond?: number
+          name: string
+          required_skills?: Json | null
+          status?: string
+          task_description?: string | null
+          total_earned?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          id?: number
+          members?: Json | null
+          min_bond?: number
+          name?: string
+          required_skills?: Json | null
+          status?: string
+          task_description?: string | null
+          total_earned?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          asset: string
+          created_at: string
+          from_bot_id: number | null
+          id: number
+          metadata: Json | null
+          status: string
+          to_bot_id: number | null
+          tx_id: string
+          tx_type: string
+        }
+        Insert: {
+          amount?: number
+          asset?: string
+          created_at?: string
+          from_bot_id?: number | null
+          id?: number
+          metadata?: Json | null
+          status?: string
+          to_bot_id?: number | null
+          tx_id: string
+          tx_type: string
+        }
+        Update: {
+          amount?: number
+          asset?: string
+          created_at?: string
+          from_bot_id?: number | null
+          id?: number
+          metadata?: Json | null
+          status?: string
+          to_bot_id?: number | null
+          tx_id?: string
+          tx_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_from_bot_id_fkey"
+            columns: ["from_bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_to_bot_id_fkey"
+            columns: ["to_bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
