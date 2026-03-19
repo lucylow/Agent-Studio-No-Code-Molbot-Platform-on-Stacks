@@ -1,17 +1,20 @@
 import { motion } from "framer-motion";
-import { Zap, Wallet, Menu, X, User, LogOut } from "lucide-react";
+import { Zap, Wallet, Menu, X, User, LogOut, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import WalletConnect from "@/components/WalletConnect";
 import NetworkStatus from "@/components/NetworkStatus";
 
-const navLinks = [
+const primaryLinks = [
   { to: "/", label: "Home" },
   { to: "/simulator", label: "Simulator" },
   { to: "/x402", label: "x402" },
   { to: "/marketplace", label: "Marketplace" },
+];
+
+const moreLinks = [
   { to: "/swarms", label: "Swarms" },
   { to: "/nfts", label: "NFTs" },
   { to: "/architecture", label: "Architecture" },
@@ -23,11 +26,26 @@ const navLinks = [
   { to: "/governance", label: "DAO" },
 ];
 
+const allLinks = [...primaryLinks, ...moreLinks];
+
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const isMoreActive = moreLinks.some((l) => location.pathname === l.to);
 
   return (
     <motion.nav
@@ -46,7 +64,7 @@ const Navbar = () => {
 
         <div className="hidden lg:flex items-center gap-0.5">
           <NetworkStatus />
-          {navLinks.map((link) => (
+          {primaryLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
@@ -59,6 +77,44 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+
+          {/* More dropdown */}
+          <div ref={moreRef} className="relative">
+            <button
+              onClick={() => setMoreOpen(!moreOpen)}
+              className={`flex items-center gap-1 px-3 py-2 text-sm rounded-md transition-colors ${
+                isMoreActive
+                  ? "text-primary bg-primary/10 font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              More
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
+            </button>
+            {moreOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute top-full right-0 mt-1 w-44 bg-card border border-border rounded-xl shadow-lg py-1 overflow-hidden"
+              >
+                {moreLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setMoreOpen(false)}
+                    className={`block px-4 py-2 text-sm transition-colors ${
+                      location.pathname === link.to
+                        ? "text-primary bg-primary/10 font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </motion.div>
+            )}
+          </div>
+
           {user && (
             <Link
               to="/dashboard"
@@ -108,7 +164,7 @@ const Navbar = () => {
 
       {mobileOpen && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl">
-          {navLinks.map((link) => (
+          {allLinks.map((link) => (
             <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)}
               className={`block px-6 py-3 text-sm transition-colors ${location.pathname === link.to ? "text-primary bg-primary/10 font-semibold" : "text-muted-foreground hover:text-foreground"}`}>
               {link.label}
