@@ -20,8 +20,15 @@ interface BotData {
   created_at: string;
 }
 
+const DEMO_BOTS: BotData[] = [
+  { id: 1, name: "ImageGen Pro", skills: ["image-gen", "text-to-image"], price_model: "fixed", price_amount: 0.002, price_asset: "sBTC", active: true, on_chain_id: 1001, created_at: "2026-03-15T10:00:00Z" },
+  { id: 2, name: "CodeAudit Bot", skills: ["code-review", "security-scan"], price_model: "fixed", price_amount: 0.005, price_asset: "sBTC", active: true, on_chain_id: 1002, created_at: "2026-03-16T14:30:00Z" },
+  { id: 3, name: "DataCrunch v2", skills: ["data-analysis", "csv-parse"], price_model: "stream", price_amount: 0.001, price_asset: "USDCx", active: false, on_chain_id: 1003, created_at: "2026-03-17T09:15:00Z" },
+  { id: 4, name: "TranslatorX", skills: ["translation", "nlp"], price_model: "fixed", price_amount: 0.003, price_asset: "sBTC", active: true, on_chain_id: 1004, created_at: "2026-03-18T16:45:00Z" },
+];
+
 const Dashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isDemo } = useAuth();
   const navigate = useNavigate();
   const [bots, setBots] = useState<BotData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +39,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
-    loadBots();
-  }, [user]);
+    if (isDemo) {
+      setBots(DEMO_BOTS);
+      setLoading(false);
+    } else {
+      loadBots();
+    }
+  }, [user, isDemo]);
 
   const loadBots = async () => {
     try {
