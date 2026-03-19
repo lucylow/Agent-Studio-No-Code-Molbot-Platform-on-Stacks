@@ -156,7 +156,10 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isDemo && <span className="inline-block bg-primary/15 text-primary text-[10px] font-mono px-2 py-0.5 rounded-md mr-2">DEMO</span>}
+              {user.email}
+            </p>
           </div>
           <div className="flex gap-3">
             <Button onClick={() => setShowCreate(!showCreate)} className="bg-primary text-primary-foreground hover:bg-primary/90 glow-cyan gap-2">
