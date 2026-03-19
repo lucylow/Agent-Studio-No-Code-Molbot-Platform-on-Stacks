@@ -195,7 +195,7 @@ async function processEvent(
  * Simulate a Chainhook event for testing (authenticated).
  */
 async function handleSimulateEvent(ctx: RequestContext) {
-  requireAuth(ctx);
+  if (!ctx.userId) throw new Error('Authentication required');
 
   const eventType = validateString(ctx.body.eventType || 'x402-payment', 'eventType');
   const blockHeight = mockBlockHeight();
@@ -306,9 +306,6 @@ async function handleSimulateEvent(ctx: RequestContext) {
   });
 }
 
-function requireAuth(ctx: RequestContext): asserts ctx is RequestContext & { userId: string } {
-  if (!ctx.userId) throw new Error('Authentication required');
-}
 
 /**
  * GET /chainhook?action=predicates
