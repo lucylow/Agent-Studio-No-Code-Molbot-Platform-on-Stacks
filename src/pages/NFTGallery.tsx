@@ -6,6 +6,18 @@ import { Sparkles, Flame, ExternalLink, Image, Hash, Shield } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+const DEMO_NFTS: NftToken[] = [
+  { id: 1, token_id: 1, bot_id: 1, owner_id: "demo-user-00000000-0000-0000-0000-000000000000", name: "ImageGen Pro", metadata_uri: null, mint_tx_id: "0xdemo_mint_001", mint_fee: 0.001, mint_fee_asset: "sBTC", minted_at: "2026-03-15T12:00:00Z", burned: false },
+  { id: 2, token_id: 2, bot_id: 2, owner_id: "demo-user-00000000-0000-0000-0000-000000000000", name: "CodeAudit Bot", metadata_uri: null, mint_tx_id: "0xdemo_mint_002", mint_fee: 0.001, mint_fee_asset: "sBTC", minted_at: "2026-03-16T15:00:00Z", burned: false },
+];
+
+const DEMO_BOTS: BotData[] = [
+  { id: 1, name: "ImageGen Pro", skills: ["image-gen"], price_model: "fixed", price_amount: 0.002, price_asset: "sBTC" },
+  { id: 2, name: "CodeAudit Bot", skills: ["code-review"], price_model: "fixed", price_amount: 0.005, price_asset: "sBTC" },
+  { id: 3, name: "DataCrunch v2", skills: ["data-analysis"], price_model: "stream", price_amount: 0.001, price_asset: "USDCx" },
+  { id: 4, name: "TranslatorX", skills: ["translation"], price_model: "fixed", price_amount: 0.003, price_asset: "sBTC" },
+];
+
 interface NftToken {
   id: number;
   token_id: number;
@@ -30,7 +42,7 @@ interface BotData {
 }
 
 const NFTGallery = () => {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const [nfts, setNfts] = useState<NftToken[]>([]);
   const [myBots, setMyBots] = useState<BotData[]>([]);
   const [myNfts, setMyNfts] = useState<NftToken[]>([]);
@@ -58,21 +70,30 @@ const NFTGallery = () => {
   };
 
   useEffect(() => {
+    if (isDemo) {
+      setNfts(DEMO_NFTS);
+      setMyNfts(DEMO_NFTS);
+      setMyBots(DEMO_BOTS);
+      setStats({ totalMinted: DEMO_NFTS.length, totalBurned: 0, circulating: DEMO_NFTS.length });
+      setLoading(false);
+      return;
+    }
+
     const load = async () => {
       try {
-        const [allNfts, statsData] = await Promise.all([
+        const [allNftsRes, statsData] = await Promise.all([
           apiCall("list"),
           apiCall("stats"),
         ]);
-        setNfts(allNfts || []);
+        setNfts(allNftsRes?.data || allNftsRes || []);
         setStats(statsData);
 
         if (user) {
-          const [myNftsData, botsRes] = await Promise.all([
+          const [myNftsRes, botsRes] = await Promise.all([
             apiCall("my-nfts"),
             supabase.from("bots").select("*").eq("owner_id", user.id),
           ]);
-          setMyNfts(myNftsData || []);
+          setMyNfts(myNftsRes?.data || myNftsRes || []);
           setMyBots((botsRes.data as BotData[]) || []);
         }
       } catch (err) {
@@ -82,7 +103,7 @@ const NFTGallery = () => {
       }
     };
     load();
-  }, [user]);
+  }, [user, isDemo]);
 
   const mintNft = async (botId: number) => {
     setMinting(botId);
