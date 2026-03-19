@@ -20,8 +20,15 @@ interface BotData {
   created_at: string;
 }
 
+const DEMO_BOTS: BotData[] = [
+  { id: 1, name: "ImageGen Pro", skills: ["image-gen", "text-to-image"], price_model: "fixed", price_amount: 0.002, price_asset: "sBTC", active: true, on_chain_id: 1001, created_at: "2026-03-15T10:00:00Z" },
+  { id: 2, name: "CodeAudit Bot", skills: ["code-review", "security-scan"], price_model: "fixed", price_amount: 0.005, price_asset: "sBTC", active: true, on_chain_id: 1002, created_at: "2026-03-16T14:30:00Z" },
+  { id: 3, name: "DataCrunch v2", skills: ["data-analysis", "csv-parse"], price_model: "stream", price_amount: 0.001, price_asset: "USDCx", active: false, on_chain_id: 1003, created_at: "2026-03-17T09:15:00Z" },
+  { id: 4, name: "TranslatorX", skills: ["translation", "nlp"], price_model: "fixed", price_amount: 0.003, price_asset: "sBTC", active: true, on_chain_id: 1004, created_at: "2026-03-18T16:45:00Z" },
+];
+
 const Dashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isDemo } = useAuth();
   const navigate = useNavigate();
   const [bots, setBots] = useState<BotData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +39,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
-    loadBots();
-  }, [user]);
+    if (isDemo) {
+      setBots(DEMO_BOTS);
+      setLoading(false);
+    } else {
+      loadBots();
+    }
+  }, [user, isDemo]);
 
   const loadBots = async () => {
     try {
@@ -50,8 +62,6 @@ const Dashboard = () => {
 
   const createBot = async () => {
     setErrors({});
-
-    // Client-side validation with Zod
     const result = createBotSchema.safeParse(newBot);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -64,11 +74,33 @@ const Dashboard = () => {
       return;
     }
 
+    if (isDemo) {
+      const demoBotId = bots.length + 5;
+      const newDemoBot: BotData = {
+        id: demoBotId,
+        name: result.data.name,
+        skills: result.data.skills,
+        price_model: result.data.priceModel,
+        price_amount: result.data.priceAmount,
+        price_asset: result.data.priceAsset,
+        active: true,
+        on_chain_id: 2000 + demoBotId,
+        created_at: new Date().toISOString(),
+      };
+      setBots((prev) => [newDemoBot, ...prev]);
+      toast.success(`Bot "${result.data.name}" created!`, {
+        description: `Demo On-chain ID: ${newDemoBot.on_chain_id}`,
+      });
+      setShowCreate(false);
+      setNewBot({ name: "", skills: "", priceModel: "fixed", priceAmount: "0.001", priceAsset: "sBTC" });
+      setErrors({});
+      return;
+    }
+
     setCreating(true);
     try {
       const session = await supabase.auth.getSession();
       const idempotencyKey = crypto.randomUUID();
-
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-api?action=create-bot`,
         {
@@ -89,9 +121,7 @@ const Dashboard = () => {
         }
       );
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error);
-
       toast.success(`Bot "${result.data.name}" created!`, {
         description: `On-chain ID: ${data.onChainId} | Tx: ${data.txId.slice(0, 12)}...`,
       });
@@ -126,7 +156,10 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isDemo && <span className="inline-block bg-primary/15 text-primary text-[10px] font-mono px-2 py-0.5 rounded-md mr-2">DEMO</span>}
+              {user.email}
+            </p>
           </div>
           <div className="flex gap-3">
             <Button onClick={() => setShowCreate(!showCreate)} className="bg-primary text-primary-foreground hover:bg-primary/90 glow-cyan gap-2">
