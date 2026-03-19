@@ -18,6 +18,10 @@ import NFTGallery from "./pages/NFTGallery.tsx";
 import Impact from "./pages/Impact.tsx";
 import Governance from "./pages/Governance.tsx";
 import Architecture from "./pages/Architecture.tsx";
+import Tokenomics from "./pages/Tokenomics.tsx";
+import Roadmap from "./pages/Roadmap.tsx";
+import Team from "./pages/Team.tsx";
+import ApiExplorer from "./pages/ApiExplorer.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -47,6 +51,10 @@ const App = () => (
                   <Route path="/impact" element={<Impact />} />
                   <Route path="/governance" element={<Governance />} />
                   <Route path="/architecture" element={<Architecture />} />
+                  <Route path="/tokenomics" element={<Tokenomics />} />
+                  <Route path="/roadmap" element={<Roadmap />} />
+                  <Route path="/team" element={<Team />} />
+                  <Route path="/api" element={<ApiExplorer />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
