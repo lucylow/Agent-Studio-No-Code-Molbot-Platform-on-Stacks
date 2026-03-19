@@ -9,6 +9,7 @@ import {
   AlertCircle, CheckCircle2, Clock, DollarSign,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSupabasePostgresChanges } from "@/hooks/useSupabasePostgresChanges";
 
 interface SwarmData {
   id: number;
@@ -50,9 +51,44 @@ const Swarms = () => {
     if (user) loadMyBots();
   }, [user]);
 
+  useSupabasePostgresChanges({
+    channelKey: user ? `swarms:creator:${user.id}` : "swarms:creator:unknown",
+    table: "swarms",
+    events: ["INSERT", "UPDATE", "DELETE"],
+    enabled: !!user,
+    filter: user ? `creator_id=eq.${user.id}` : undefined,
+    throttleMs: 250,
+    onPayload: (payload) => {
+      setSwarms((prev) => {
+        switch (payload.eventType) {
+          case "DELETE": {
+            const deletedId = payload.old?.id as number | undefined;
+            if (deletedId === undefined) return prev;
+            return prev.filter((s) => s.id !== deletedId);
+          }
+          case "INSERT":
+          case "UPDATE": {
+            const row = payload.new as SwarmData | undefined;
+            if (!row) return prev;
+            const next = prev.some((s) => s.id === row.id)
+              ? prev.map((s) => (s.id === row.id ? row : s))
+              : [row, ...prev];
+            next.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+            return next;
+          }
+          default:
+            return prev;
+        }
+      });
+    },
+  });
+
   const loadSwarms = async () => {
     try {
-      const { data, error } = await supabase.from("swarms").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("swarms")
+        .select("id, name, task_description, required_skills, members, min_bond, status, total_earned, created_at, creator_id")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       setSwarms((data as unknown as SwarmData[]) || []);
     } catch (err: any) {

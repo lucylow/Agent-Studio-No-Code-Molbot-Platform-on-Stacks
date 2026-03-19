@@ -140,13 +140,24 @@ async function processEvent(
   // Map Chainhook event types to our internal types
   if (eventType === 'print_event' || eventType === 'contract_event') {
     const topic = eventData.topic || eventData.type || 'unknown';
+    const txType = `chainhook_${topic}`;
+
+    // Chainhook webhooks may retry; avoid inserting duplicate rows for the same tx + type.
+    const { data: existing } = await ctx.supabase
+      .from('transactions')
+      .select('id')
+      .eq('tx_id', txId)
+      .eq('tx_type', txType)
+      .maybeSingle();
+
+    if (existing) return null;
 
     // Record the event
     await ctx.supabase.from('transactions').insert({
       tx_id: txId,
       amount: eventData.amount ? parseFloat(eventData.amount) / 1e8 : 0,
       asset: eventData.asset || 'sBTC',
-      tx_type: `chainhook_${topic}`,
+      tx_type: txType,
       status: 'confirmed',
       from_bot_id: eventData.fromBotId || null,
       to_bot_id: eventData.toBotId || null,
@@ -167,11 +178,21 @@ async function processEvent(
 
   // Handle STX transfer events
   if (eventType === 'stx_transfer_event') {
+    const existingTxType = 'chainhook_stx_transfer';
+    const { data: existing } = await ctx.supabase
+      .from('transactions')
+      .select('id')
+      .eq('tx_id', txId)
+      .eq('tx_type', existingTxType)
+      .maybeSingle();
+
+    if (existing) return null;
+
     await ctx.supabase.from('transactions').insert({
       tx_id: txId,
       amount: (eventData.amount || 0) / 1e6,
       asset: 'STX',
-      tx_type: 'chainhook_stx_transfer',
+      tx_type: existingTxType,
       status: 'confirmed',
       metadata: {
         protocol: 'chainhook',

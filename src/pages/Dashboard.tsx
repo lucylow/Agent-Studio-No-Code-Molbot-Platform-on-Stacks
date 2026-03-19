@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Plus, Bot, Activity, Wallet, LogOut, AlertCircle, Sparkles, Users, Image, ArrowRight } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { createBotSchema } from "@/lib/validation";
+import { useSupabasePostgresChanges } from "@/hooks/useSupabasePostgresChanges";
 
 interface BotData {
   id: number;
@@ -20,6 +21,12 @@ interface BotData {
   created_at: string;
 }
 
+type DashboardProps = {
+  // "studio" shows the create/register flow first.
+  // "agents" shows the agent list/management view.
+  initialView?: "studio" | "agents";
+};
+
 const DEMO_BOTS: BotData[] = [
   { id: 1, name: "ImageGen Pro", skills: ["image-gen", "text-to-image"], price_model: "fixed", price_amount: 0.002, price_asset: "sBTC", active: true, on_chain_id: 1001, created_at: "2026-03-15T10:00:00Z" },
   { id: 2, name: "CodeAudit Bot", skills: ["code-review", "security-scan"], price_model: "fixed", price_amount: 0.005, price_asset: "sBTC", active: true, on_chain_id: 1002, created_at: "2026-03-16T14:30:00Z" },
@@ -27,15 +34,26 @@ const DEMO_BOTS: BotData[] = [
   { id: 4, name: "TranslatorX", skills: ["translation", "nlp"], price_model: "fixed", price_amount: 0.003, price_asset: "sBTC", active: true, on_chain_id: 1004, created_at: "2026-03-18T16:45:00Z" },
 ];
 
-const Dashboard = () => {
+const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
   const { user, signOut, isDemo } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [bots, setBots] = useState<BotData[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreate, setShowCreate] = useState(initialView === "studio");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newBot, setNewBot] = useState({ name: "", skills: "", priceModel: "fixed", priceAmount: "0.001", priceAsset: "sBTC" });
+
+  const botsFilter = searchParams.get("filter");
+  const visibleBots =
+    botsFilter === "active"
+      ? bots.filter((b) => b.active)
+      : botsFilter === "paused"
+        ? bots.filter((b) => !b.active)
+        : bots;
+
+  const pageTitle = initialView === "studio" ? "Studio" : "Agents";
 
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
@@ -47,9 +65,47 @@ const Dashboard = () => {
     }
   }, [user, isDemo]);
 
+  useSupabasePostgresChanges({
+    channelKey: user ? `bots:owner:${user.id}` : "bots:owner:unknown",
+    table: "bots",
+    events: ["INSERT", "UPDATE", "DELETE"],
+    enabled: !!user && !isDemo,
+    filter: user ? `owner_id=eq.${user.id}` : undefined,
+    throttleMs: 250,
+    onPayload: (payload) => {
+      setBots((prev) => {
+        switch (payload.eventType) {
+          case "DELETE": {
+            const deletedId = payload.old?.id as number | undefined;
+            if (deletedId === undefined) return prev;
+            return prev.filter((b) => b.id !== deletedId);
+          }
+          case "INSERT":
+          case "UPDATE": {
+            const row = payload.new as BotData | undefined;
+            if (!row) return prev;
+            const next = prev.some((b) => b.id === row.id)
+              ? prev.map((b) => (b.id === row.id ? row : b))
+              : [row, ...prev];
+
+            // Keep newest first (matches initial load order).
+            next.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+            return next;
+          }
+          default:
+            return prev;
+        }
+      });
+    },
+  });
+
   const loadBots = async () => {
     try {
-      const { data, error } = await supabase.from("bots").select("*").eq("owner_id", user!.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("bots")
+        .select("id, name, skills, price_model, price_amount, price_asset, active, on_chain_id, created_at")
+        .eq("owner_id", user!.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       setBots((data as BotData[]) || []);
     } catch (err: any) {
@@ -155,16 +211,18 @@ const Dashboard = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-foreground">{pageTitle}</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {isDemo && <span className="inline-block bg-primary/15 text-primary text-[10px] font-mono px-2 py-0.5 rounded-md mr-2">DEMO</span>}
               {user.email}
             </p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={() => setShowCreate(!showCreate)} className="bg-primary text-primary-foreground hover:bg-primary/90 glow-cyan gap-2">
-              <Plus className="w-4 h-4" /> Create Bot
-            </Button>
+            {initialView === "studio" && (
+              <Button onClick={() => setShowCreate(!showCreate)} className="bg-primary text-primary-foreground hover:bg-primary/90 glow-cyan gap-2">
+                <Plus className="w-4 h-4" /> Create Bot
+              </Button>
+            )}
             <Button variant="outline" onClick={handleSignOut} className="border-border text-muted-foreground hover:text-foreground gap-2">
               <LogOut className="w-4 h-4" /> Sign Out
             </Button>
@@ -294,14 +352,14 @@ const Dashboard = () => {
         {/* Bot list */}
         {loading ? (
           <p className="text-center text-muted-foreground" role="status">Loading...</p>
-        ) : bots.length === 0 ? (
+        ) : visibleBots.length === 0 ? (
           <div className="text-center py-16" role="status">
             <Bot className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground">No bots yet. Create your first one!</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label="Your bots">
-            {bots.map((bot) => (
+            {visibleBots.map((bot) => (
               <motion.div key={bot.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="gradient-border-card rounded-xl p-5" role="listitem" aria-label={`Bot: ${bot.name}`}>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-2xl" role="img" aria-label="Robot">🤖</span>

@@ -133,24 +133,38 @@
 
 ;; @notice Batch payment: pay up to 5 receivers in one transaction.
 ;; Gas-efficient for swarm payouts.
-;; Pass u0 for unused slots.
+;; Pass u0 for unused amounts (unused principals may be any value).
 (define-public (batch-payment
     (token <sip-010-trait>)
     (sender principal)
     (r1 principal) (a1 uint)
-    (r2 principal) (a2 uint))
-  (begin
-    (if (> a1 u0) (try! (send-payment token sender r1 a1)) true)
-    (if (> a2 u0) (try! (send-payment token sender r2 a2)) true)
+    (r2 principal) (a2 uint)
+    (r3 principal) (a3 uint)
+    (r4 principal) (a4 uint)
+    (r5 principal) (a5 uint))
+  (let (
+    (c1 (if (> a1 u0) u1 u0))
+    (c2 (if (> a2 u0) u1 u0))
+    (c3 (if (> a3 u0) u1 u0))
+    (c4 (if (> a4 u0) u1 u0))
+    (c5 (if (> a5 u0) u1 u0))
+    (total (+ (+ (+ (+ c1 c2) c3) c4) c5)))
+    (begin
+      (if (> a1 u0) (try! (send-payment token sender r1 a1)) true)
+      (if (> a2 u0) (try! (send-payment token sender r2 a2)) true)
+      (if (> a3 u0) (try! (send-payment token sender r3 a3)) true)
+      (if (> a4 u0) (try! (send-payment token sender r4 a4)) true)
+      (if (> a5 u0) (try! (send-payment token sender r5 a5)) true)
 
-    (print {
-      topic: EVENT_BATCH,
-      sender: sender,
-      total-recipients: u2,
-      block-height: block-height
-    })
+      (print {
+        topic: EVENT_BATCH,
+        sender: sender,
+        total-recipients: total,
+        block-height: block-height
+      })
 
-    (ok true)
+      (ok true)
+    )
   )
 )
 

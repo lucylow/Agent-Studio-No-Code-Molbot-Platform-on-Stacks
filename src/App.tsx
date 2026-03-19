@@ -13,6 +13,8 @@ import Docs from "./pages/Docs.tsx";
 import BountiesPage from "./pages/BountiesPage.tsx";
 import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import Studio from "./pages/Studio.tsx";
+import Agents from "./pages/Agents.tsx";
 import Swarms from "./pages/Swarms.tsx";
 import NFTGallery from "./pages/NFTGallery.tsx";
 import Impact from "./pages/Impact.tsx";
@@ -20,10 +22,14 @@ import Governance from "./pages/Governance.tsx";
 import Architecture from "./pages/Architecture.tsx";
 import Tokenomics from "./pages/Tokenomics.tsx";
 import Roadmap from "./pages/Roadmap.tsx";
+import WalletDemoPage from "./pages/demo-wallet.tsx";
 
 import ApiExplorer from "./pages/ApiExplorer.tsx";
 import Simulator from "./pages/Simulator.tsx";
 import X402Protocol from "./pages/X402Protocol.tsx";
+import Deploy from "./pages/Deploy.tsx";
+import Billing from "./pages/Billing.tsx";
+import Settings from "./pages/Settings.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -47,7 +53,9 @@ const App = () => (
                   <Route path="/docs" element={<Docs />} />
                   <Route path="/bounties" element={<BountiesPage />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard initialView="agents" />} />
+                  <Route path="/studio" element={<Studio />} />
+                  <Route path="/agents" element={<Agents />} />
                   <Route path="/swarms" element={<Swarms />} />
                   <Route path="/nfts" element={<NFTGallery />} />
                   <Route path="/impact" element={<Impact />} />
@@ -55,7 +63,12 @@ const App = () => (
                   <Route path="/architecture" element={<Architecture />} />
                   <Route path="/tokenomics" element={<Tokenomics />} />
                   <Route path="/roadmap" element={<Roadmap />} />
+
+                  <Route path="/demo-wallet" element={<WalletDemoPage />} />
                   
+                  <Route path="/deploy" element={<Deploy />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/settings" element={<Settings />} />
                   <Route path="/api" element={<ApiExplorer />} />
                   <Route path="/simulator" element={<Simulator />} />
                   <Route path="/x402" element={<X402Protocol />} />

@@ -60,25 +60,34 @@ interface PaymentProof {
 }
 
 function verifyPaymentProof(proof: PaymentProof, expected: {
-  receiver: string;
+  receiver?: string;
   minAmount: number;
   asset: string;
 }): { valid: boolean; reason?: string } {
-  if (!proof.txId || !proof.txId.startsWith("0x")) {
+  if (!proof.txId || typeof proof.txId !== "string" || !proof.txId.startsWith("0x")) {
     return { valid: false, reason: "Invalid transaction ID format" };
   }
-  if (proof.receiver !== expected.receiver) {
+  if (typeof proof.amount !== "number" || Number.isNaN(proof.amount) || !Number.isFinite(proof.amount)) {
+    return { valid: false, reason: "Invalid payment amount" };
+  }
+  if (expected.receiver && proof.receiver !== expected.receiver) {
     return { valid: false, reason: "Payment receiver mismatch" };
+  }
+  if (!proof.receiver || typeof proof.receiver !== "string") {
+    return { valid: false, reason: "Invalid payment receiver" };
+  }
+  if (!proof.sender || typeof proof.sender !== "string") {
+    return { valid: false, reason: "Invalid payment sender" };
   }
   if (proof.amount < expected.minAmount) {
     return { valid: false, reason: `Insufficient payment: expected ${expected.minAmount}, got ${proof.amount}` };
   }
-  if (proof.asset !== expected.asset) {
+  if (!proof.asset || typeof proof.asset !== "string" || proof.asset !== expected.asset) {
     return { valid: false, reason: `Wrong asset: expected ${expected.asset}, got ${proof.asset}` };
   }
   // In production: verify signature against Stacks chain via Hiro API
   // For hackathon: mock verification
-  if (!proof.signature || proof.signature.length < 10) {
+  if (!proof.signature || typeof proof.signature !== "string" || proof.signature.length < 10) {
     return { valid: false, reason: "Invalid payment signature" };
   }
   return { valid: true };
@@ -183,22 +192,57 @@ async function handleRequestService(ctx: RequestContext) {
   }
 
   // Verify payment proof
-  const receiverAddr = mockStacksAddress(); // In production: from bot's on-chain registration
   const verification = verifyPaymentProof(paymentHeader, {
-    receiver: receiverAddr,
+    // Demo note: we don't currently persist/derive the expected receiver on-chain;
+    // for correctness we validate amount + asset + signature and the provided sender/receiver fields.
+    receiver: undefined,
     minAmount: provider.price_amount,
     asset: provider.price_asset,
   });
 
-  // For demo: accept any well-formed proof
-  const txId = paymentHeader.txId || mockTxId();
+  if (!verification.valid) {
+    const receiverAddr = typeof paymentHeader.receiver === "string" && paymentHeader.receiver
+      ? paymentHeader.receiver
+      : mockStacksAddress();
+    const currentBlock = mockBlockHeight();
+    const expiresBlock = currentBlock + ESCROW_TIMEOUT_BLOCKS;
+    const clarityContract = provider.price_model === 'stream'
+      ? 'usdcx-stream.create-usdcx-stream'
+      : 'payment-router.send-x402-payment';
+
+    return jsonResponse({
+      status: 402,
+      message: "Payment Required",
+      requestId: ctx.requestId,
+      reason: verification.reason || "Invalid payment proof",
+      x402: {
+        version: X402_VERSION,
+        network: X402_NETWORK,
+        paymentRequired: {
+          amount: provider.price_amount,
+          asset: provider.price_asset,
+          receiver: receiverAddr,
+          clarityContract,
+          expiresBlock,
+          memo: `x402:${provider.id}:${service}`,
+        },
+        supportedAssets: SUPPORTED_ASSETS,
+        feeBurnRate: FEE_BURN_RATE,
+      },
+    }, 402);
+  }
+
+  const txId = paymentHeader.txId;
   const blockHeight = paymentHeader.blockHeight || mockBlockHeight();
   const burnBlock = mockBurnBlockHeight();
 
   // Calculate fee burn
-  const grossAmount = paymentHeader.amount || provider.price_amount;
+  const grossAmount = paymentHeader.amount;
   const burnAmount = grossAmount * FEE_BURN_RATE;
   const netAmount = grossAmount - burnAmount;
+
+  const senderAddr = paymentHeader.sender;
+  const receiverAddr = paymentHeader.receiver;
 
   // Record the transaction
   await ctx.supabase.from('transactions').insert({
@@ -216,7 +260,7 @@ async function handleRequestService(ctx: RequestContext) {
       netAmount,
       burnAmount,
       burnRate: FEE_BURN_RATE,
-      sender: paymentHeader.sender || mockStacksAddress(),
+      sender: senderAddr,
       receiver: receiverAddr,
       clarityContract: provider.price_model === 'stream'
         ? 'usdcx-stream.create-usdcx-stream'
