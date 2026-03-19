@@ -51,6 +51,10 @@ const App = () => (
                   <Route path="/impact" element={<Impact />} />
                   <Route path="/governance" element={<Governance />} />
                   <Route path="/architecture" element={<Architecture />} />
+                  <Route path="/tokenomics" element={<Tokenomics />} />
+                  <Route path="/roadmap" element={<Roadmap />} />
+                  <Route path="/team" element={<Team />} />
+                  <Route path="/api" element={<ApiExplorer />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
