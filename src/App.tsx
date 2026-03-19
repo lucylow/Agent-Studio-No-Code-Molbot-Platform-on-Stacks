@@ -57,6 +57,8 @@ const App = () => (
                   <Route path="/roadmap" element={<Roadmap />} />
                   <Route path="/team" element={<Team />} />
                   <Route path="/api" element={<ApiExplorer />} />
+                  <Route path="/simulator" element={<Simulator />} />
+                  <Route path="/x402" element={<X402Protocol />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>

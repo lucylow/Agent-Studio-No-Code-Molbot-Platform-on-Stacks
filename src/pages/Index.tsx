@@ -1,6 +1,7 @@
 import HeroSection from "@/components/HeroSection";
 import StatsSection from "@/components/StatsSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
+import X402LiveDemo from "@/components/X402LiveDemo";
 import StacksShowcase from "@/components/StacksShowcase";
 import HowItWorks from "@/components/HowItWorks";
 import OnboardingFlow from "@/components/OnboardingFlow";
@@ -12,6 +13,7 @@ const Index = () => (
   <>
     <HeroSection />
     <StatsSection />
+    <X402LiveDemo />
     <FeaturesGrid />
     <StacksShowcase />
     <HowItWorks />
