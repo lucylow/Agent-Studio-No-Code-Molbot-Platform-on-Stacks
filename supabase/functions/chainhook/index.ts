@@ -306,9 +306,6 @@ async function handleSimulateEvent(ctx: RequestContext) {
   });
 }
 
-function requireAuth(ctx: RequestContext): asserts ctx is RequestContext & { userId: string } {
-  if (!ctx.userId) throw new Error('Authentication required');
-}
 
 /**
  * GET /chainhook?action=predicates
