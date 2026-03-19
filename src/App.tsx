@@ -20,7 +20,7 @@ import Governance from "./pages/Governance.tsx";
 import Architecture from "./pages/Architecture.tsx";
 import Tokenomics from "./pages/Tokenomics.tsx";
 import Roadmap from "./pages/Roadmap.tsx";
-import Team from "./pages/Team.tsx";
+
 import ApiExplorer from "./pages/ApiExplorer.tsx";
 import Simulator from "./pages/Simulator.tsx";
 import X402Protocol from "./pages/X402Protocol.tsx";
