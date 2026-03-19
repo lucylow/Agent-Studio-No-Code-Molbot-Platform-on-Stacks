@@ -123,6 +123,21 @@ const Auth = () => {
             {loading ? "Loading..." : isSignUp ? "Create Account" : "Sign In"}
           </Button>
 
+          <div className="relative flex items-center my-2">
+            <div className="flex-1 border-t border-border" />
+            <span className="px-3 text-xs text-muted-foreground">or</span>
+            <div className="flex-1 border-t border-border" />
+          </div>
+
+          <Button
+            type="button"
+            onClick={handleDemo}
+            variant="outline"
+            className="w-full border-primary/30 text-primary hover:bg-primary/10 gap-2 h-11"
+          >
+            <Play className="w-4 h-4" /> Enter Demo Mode
+          </Button>
+
           <p className="text-center text-xs text-muted-foreground">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <button
