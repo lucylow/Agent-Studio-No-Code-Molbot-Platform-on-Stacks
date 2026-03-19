@@ -22,6 +22,8 @@ import Tokenomics from "./pages/Tokenomics.tsx";
 import Roadmap from "./pages/Roadmap.tsx";
 import Team from "./pages/Team.tsx";
 import ApiExplorer from "./pages/ApiExplorer.tsx";
+import Simulator from "./pages/Simulator.tsx";
+import X402Protocol from "./pages/X402Protocol.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
