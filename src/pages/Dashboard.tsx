@@ -62,8 +62,6 @@ const Dashboard = () => {
 
   const createBot = async () => {
     setErrors({});
-
-    // Client-side validation with Zod
     const result = createBotSchema.safeParse(newBot);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -76,11 +74,33 @@ const Dashboard = () => {
       return;
     }
 
+    if (isDemo) {
+      const demoBotId = bots.length + 5;
+      const newDemoBot: BotData = {
+        id: demoBotId,
+        name: result.data.name,
+        skills: result.data.skills.split(",").map((s: string) => s.trim()).filter(Boolean),
+        price_model: result.data.priceModel,
+        price_amount: parseFloat(result.data.priceAmount),
+        price_asset: result.data.priceAsset,
+        active: true,
+        on_chain_id: 2000 + demoBotId,
+        created_at: new Date().toISOString(),
+      };
+      setBots((prev) => [newDemoBot, ...prev]);
+      toast.success(`Bot "${result.data.name}" created!`, {
+        description: `Demo On-chain ID: ${newDemoBot.on_chain_id}`,
+      });
+      setShowCreate(false);
+      setNewBot({ name: "", skills: "", priceModel: "fixed", priceAmount: "0.001", priceAsset: "sBTC" });
+      setErrors({});
+      return;
+    }
+
     setCreating(true);
     try {
       const session = await supabase.auth.getSession();
       const idempotencyKey = crypto.randomUUID();
-
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-api?action=create-bot`,
         {
@@ -101,9 +121,7 @@ const Dashboard = () => {
         }
       );
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error);
-
       toast.success(`Bot "${result.data.name}" created!`, {
         description: `On-chain ID: ${data.onChainId} | Tx: ${data.txId.slice(0, 12)}...`,
       });
