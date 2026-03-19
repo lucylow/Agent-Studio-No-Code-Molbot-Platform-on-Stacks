@@ -79,9 +79,11 @@ const Dashboard = () => {
       const newDemoBot: BotData = {
         id: demoBotId,
         name: result.data.name,
-        skills: result.data.skills.split(",").map((s: string) => s.trim()).filter(Boolean),
+        skills: typeof result.data.skills === "string" 
+          ? result.data.skills.split(",").map((s: string) => s.trim()).filter(Boolean) 
+          : result.data.skills,
         price_model: result.data.priceModel,
-        price_amount: parseFloat(result.data.priceAmount),
+        price_amount: typeof result.data.priceAmount === "string" ? parseFloat(result.data.priceAmount) : result.data.priceAmount,
         price_asset: result.data.priceAsset,
         active: true,
         on_chain_id: 2000 + demoBotId,
