@@ -14,3 +14,12 @@ verify_jwt = false
 
 [functions.nft-api]
 verify_jwt = false
+
+[functions.x402-gateway]
+verify_jwt = false
+
+[functions.task-engine]
+verify_jwt = false
+
+[functions.chainhook]
+verify_jwt = false
