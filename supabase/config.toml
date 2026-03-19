@@ -1,1 +1,25 @@
 project_id = "vmwjsvvotpgpwlbnheha"
+
+[functions.bot-api]
+verify_jwt = false
+
+[functions.nft-api]
+verify_jwt = false
+
+[functions.skill-bot]
+verify_jwt = false
+
+[functions.stacks-api]
+verify_jwt = false
+
+[functions.swarm-api]
+verify_jwt = false
+
+[functions.x402-gateway]
+verify_jwt = false
+
+[functions.task-engine]
+verify_jwt = false
+
+[functions.chainhook]
+verify_jwt = false
