@@ -70,6 +70,7 @@ const App = () => (
                   <Route path="/roadmap" element={<Roadmap />} />
 
                   <Route path="/demo-wallet" element={<WalletDemoPage />} />
+                  <Route path="/wallet" element={<WalletDashboard />} />
                   
                   <Route path="/deploy" element={<Deploy />} />
                   <Route path="/billing" element={<Billing />} />
