@@ -1,6 +1,6 @@
 # MOLBOT STUDIO 🤖 
-### No‑Code Molbot Platform on Stacks
-### "Assemble. Execute. Earn."
+### Assemble. Execute. Earn. No‑Code Molbot Platform on Stacks
+
 
 <p align="center">
   <img src="https://img.shields.io/badge/Stacks-Bitcoin%20Layer-5546FF?style=for-the-badge&logo=bitcoin" alt="Stacks" />
@@ -35,6 +35,7 @@ Agent Studio is a no‑code platform that empowers anyone to create, manage, and
 - **For crypto‑natives:** Full on‑chain ownership, programmable payments, integration with Bitflow and USDCx.
 - **For the Stacks ecosystem:** Viral growth loops, developer onboarding, and significant TVL from bot earnings.
 
+![](https://github.com/lucylow/Agent-Studio-No-Code-Molbot-Platform-on-Stacks/blob/main/Screenshot_20-3-2026_16444_www.canva.com.jpeg?raw=true)
 ---
 
 ## ✨ Features
