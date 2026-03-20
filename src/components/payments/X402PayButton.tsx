@@ -36,7 +36,7 @@ export function X402PayButton({
   jobId,
   botId,
   botName,
-  memo = "Agent Studio x402 payment",
+  memo = "Molbot Studio x402 payment",
   onExecutePayment,
   onSettled,
 }: X402PayButtonProps) {

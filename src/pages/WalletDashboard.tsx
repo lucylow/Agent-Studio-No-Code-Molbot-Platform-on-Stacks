@@ -22,7 +22,7 @@ const WalletDashboard = () => {
             <Bitcoin className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-3">
-            Agent Studio Wallet
+            Molbot Studio Wallet
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed mb-8">
             Connect your Bitcoin wallet to create, hire, and monetize molbots

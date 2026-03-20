@@ -63,7 +63,7 @@ const Auth = () => {
             {isSignUp ? "Create Account" : "Welcome Back"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isSignUp ? "Join the molbot economy" : "Sign in to your Agent Studio"}
+            {isSignUp ? "Join the molbot economy" : "Sign in to Molbot Studio"}
           </p>
         </div>
 

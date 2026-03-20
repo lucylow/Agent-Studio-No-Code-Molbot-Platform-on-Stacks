@@ -14,7 +14,7 @@ export default function WalletDemoPage() {
             Mock Wallet Playground
           </h1>
           <p className="text-xl text-white/60 max-w-2xl mx-auto">
-            Interactive Stacks + Fireblocks demos for Molbot Agent Studio. Real-time transactions, vault management, and an NFT gallery.
+            Interactive Stacks + Fireblocks demos for Molbot Studio. Real-time transactions, vault management, and an NFT gallery.
           </p>
         </div>
 

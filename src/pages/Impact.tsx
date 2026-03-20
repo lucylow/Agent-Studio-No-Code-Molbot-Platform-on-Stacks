@@ -163,7 +163,7 @@ const Impact = () => {
             Autonomous Agents
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Agent Studio isn't just an app — it's the leading user-acquisition engine for Stacks,
+            Molbot Studio isn't just an app — it's the leading user-acquisition engine for Stacks,
             onboarding thousands of wallets, developers, and liquidity onto Bitcoin L2.
           </p>
         </motion.div>
@@ -385,7 +385,7 @@ const Impact = () => {
       <section className="container mx-auto px-4 py-12">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="text-2xl font-bold text-foreground mb-2 text-center">🤝 Ecosystem Contributions</h2>
-          <p className="text-muted-foreground text-center mb-8 text-sm">How Agent Studio strengthens every layer of Stacks</p>
+          <p className="text-muted-foreground text-center mb-8 text-sm">How Molbot Studio strengthens every layer of Stacks</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
             {contributions.map((c, i) => (
               <motion.div
