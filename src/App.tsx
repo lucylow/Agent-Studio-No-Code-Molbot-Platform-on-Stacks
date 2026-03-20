@@ -44,6 +44,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
+          <WalletProvider>
           <div className="relative min-h-screen bg-background overflow-x-hidden">
             <a href="#main-content" className="skip-to-content">Skip to content</a>
             <ParticleBackground />
