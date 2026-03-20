@@ -36,9 +36,9 @@ const HeroSection = () => (
             className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.5rem] font-bold leading-[1.08] mb-6 tracking-tight text-foreground"
             style={{ textWrap: "balance" } as React.CSSProperties}
           >
-            Build bots that earn
+             Assemble. Execute.
             <br />
-            <span className="text-gradient-hero">on Bitcoin.</span>
+            <span className="text-gradient-hero">Earn.</span>
           </motion.h1>
 
           <motion.p
