@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ArrowLeft, Star, Zap, Clock, CheckCircle2, Loader2, AlertCircle, Send } from "lucide-react";
+import { SbtcPaymentFlow } from "@/components/SbtcPaymentFlow";
 import { fetchBotById, hireBot } from "@/mocks/api";
 import type { Molbot } from "@/types/molbot";
 import { SBTC_TO_USD, USDCX_TO_USD } from "@/types/molbot";
