@@ -48,7 +48,7 @@ const HeroSection = () => (
             className="text-base md:text-lg text-muted-foreground mb-10 max-w-md leading-relaxed"
             style={{ textWrap: "pretty" } as React.CSSProperties}
           >
-            Create autonomous agents that collaborate, transact, and monetize — no code, no gas fees. Powered by Stacks, settled in sBTC.
+            Build autonomous molbots that collaborate, transact, and monetize — no code, no gas fees. Powered by Stacks, settled in sBTC.
           </motion.p>
 
           <motion.div

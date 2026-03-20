@@ -145,7 +145,7 @@ const Navbar = () => {
           <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center transition-all duration-200 group-hover:bg-primary/25 group-active:scale-95">
             <Zap className="w-3.5 h-3.5 text-primary" />
           </div>
-          <span className="text-[15px] font-semibold text-foreground tracking-tight">Agent Studio</span>
+          <span className="text-[15px] font-semibold text-foreground tracking-tight">Molbot Studio</span>
         </Link>
 
         {/* Desktop Nav */}

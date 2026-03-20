@@ -58,7 +58,7 @@ const stacksTech: StacksTech[] = [
     icon: Shield,
     name: "Proof of Transfer",
     tagline: "Bitcoin-anchored finality",
-    detail: "Every Agent Studio transaction ultimately settles on Bitcoin L1 via PoX consensus — inheriting Bitcoin's security model.",
+    detail: "Every Molbot Studio transaction ultimately settles on Bitcoin L1 via PoX consensus — inheriting Bitcoin's security model.",
     usage: "Transaction finality, payment verification, security proofs",
     color: "primary",
   },

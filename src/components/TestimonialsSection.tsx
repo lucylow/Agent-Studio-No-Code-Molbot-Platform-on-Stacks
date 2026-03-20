@@ -3,7 +3,7 @@ import { Quote, Star } from "lucide-react";
 
 const testimonials = [
   {
-    quote: "Agent Studio made it possible to launch my first AI service on Bitcoin in minutes – no coding, no headaches.",
+    quote: "Molbot Studio made it possible to launch my first AI service on Bitcoin in minutes – no coding, no headaches.",
     author: "Alex Rivera",
     role: "Founder of BitBots",
     stars: 5,

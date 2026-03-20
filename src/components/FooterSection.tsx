@@ -73,7 +73,7 @@ const FooterSection = forwardRef<HTMLElement, ComponentPropsWithoutRef<"footer">
         </div>
 
         <div className="border-t border-border/20 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[11px] text-muted-foreground/40">© 2026 Agent Studio · BUIDL BATTLE #2</p>
+          <p className="text-[11px] text-muted-foreground/40">© 2026 Molbot Studio · BUIDL BATTLE #2</p>
           <p className="text-[11px] text-muted-foreground/30">Built on Stacks · Settled in sBTC</p>
         </div>
       </div>

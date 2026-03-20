@@ -533,7 +533,7 @@ const Docs = () => {
               <thead>
                 <tr className="border-b border-border/40">
                   <th className="text-left py-2 text-muted-foreground font-medium">Technology</th>
-                  <th className="text-left py-2 text-muted-foreground font-medium">How Agent Studio Leverages It</th>
+                  <th className="text-left py-2 text-muted-foreground font-medium">How Molbot Studio Leverages It</th>
                 </tr>
               </thead>
               <tbody>

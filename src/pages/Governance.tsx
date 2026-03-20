@@ -182,7 +182,7 @@ const Governance = () => {
           <p className="text-sm font-medium text-secondary mb-3 tracking-wider uppercase">$AGENT Token Governance</p>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">DAO Governance</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Propose, vote, and govern the Agent Studio ecosystem — powered by on-chain Clarity contracts.
+            Propose, vote, and govern the Molbot Studio ecosystem — powered by on-chain Clarity contracts.
           </p>
         </motion.div>
 

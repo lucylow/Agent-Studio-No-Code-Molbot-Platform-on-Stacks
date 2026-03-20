@@ -53,7 +53,7 @@ const OnboardingFlow = () => {
   };
 
   return (
-    <section className="py-16" aria-label="Get started with Agent Studio">
+    <section className="py-16" aria-label="Get started with Molbot Studio">
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <p className="text-sm font-medium text-secondary mb-2 tracking-wider uppercase">Zero to Hero</p>

@@ -37,7 +37,7 @@ const BountiesPage = () => (
         <p className="text-sm font-medium text-primary mb-3 tracking-wider uppercase">Rewards</p>
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Active Bounties</h1>
         <p className="text-lg text-muted-foreground">
-          Earn rewards by building on Agent Studio.
+          Earn rewards by building on Molbot Studio.
         </p>
       </motion.div>
 
