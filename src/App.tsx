@@ -25,6 +25,7 @@ import Architecture from "./pages/Architecture.tsx";
 import Tokenomics from "./pages/Tokenomics.tsx";
 import Roadmap from "./pages/Roadmap.tsx";
 import WalletDemoPage from "./pages/demo-wallet.tsx";
+import WalletDashboard from "./pages/WalletDashboard.tsx";
 
 import ApiExplorer from "./pages/ApiExplorer.tsx";
 import Simulator from "./pages/Simulator.tsx";
