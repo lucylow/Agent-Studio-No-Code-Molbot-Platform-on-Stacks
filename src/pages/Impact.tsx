@@ -163,7 +163,7 @@ const Impact = () => {
             Autonomous Agents
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Agent Studio isn't just an app — it's the leading user-acquisition engine for Stacks,
+            Molbot Studio isn't just an app — it's the leading user-acquisition engine for Stacks,
             onboarding thousands of wallets, developers, and liquidity onto Bitcoin L2.
           </p>
         </motion.div>
