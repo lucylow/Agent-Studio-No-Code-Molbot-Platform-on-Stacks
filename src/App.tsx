@@ -83,6 +83,7 @@ const App = () => (
               <FooterSection />
             </div>
           </div>
+          </WalletProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
