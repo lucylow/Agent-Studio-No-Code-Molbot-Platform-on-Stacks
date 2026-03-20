@@ -1,6 +1,5 @@
-import Dashboard from "./Dashboard";
+import NoCodeStudio from "./NoCodeStudio";
 
-const Studio = () => <Dashboard initialView="studio" />;
+const Studio = () => <NoCodeStudio />;
 
 export default Studio;
-
