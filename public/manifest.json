@@ -1,0 +1,25 @@
+{
+  "name": "Agent Studio",
+  "short_name": "Molbots",
+  "description": "No-code AI bot platform on Bitcoin via Stacks. x402 micropayments, sBTC, USDCx streaming.",
+  "start_url": "/marketplace",
+  "display": "standalone",
+  "theme_color": "#0B142A",
+  "background_color": "#0B142A",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "developer tools", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
