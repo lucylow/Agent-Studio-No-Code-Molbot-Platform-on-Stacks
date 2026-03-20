@@ -18,6 +18,7 @@ export interface WalletTransaction {
   timestamp: Date;
   status: "pending" | "confirmed" | "failed";
   txid: string;
+  memo?: string;
 }
 
 interface WalletState {
@@ -38,65 +39,104 @@ interface WalletContextValue extends WalletState {
 
 const WalletContext = createContext<WalletContextValue | null>(null);
 
-const MOCK_ADDRESS = "ST2Y7MKJ2PK5XBK1MXMVQ4H9T5CY3PKTA9K2P9F3B";
+const MOCK_ADDRESS = "SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQVX8X0G";
 
 const INITIAL_ASSETS: WalletAsset[] = [
-  { symbol: "sBTC", balance: 0.002543, price: 60000 },
-  { symbol: "USDCx", balance: 245.73, price: 1 },
-  { symbol: "STX", balance: 1250, price: 1 },
+  { symbol: "sBTC", balance: 0.025343, price: 60000 },
+  { symbol: "USDCx", balance: 1842.67, price: 1 },
+  { symbol: "STX", balance: 1247.83, price: 1.08 },
 ];
 
 function generateSeedTransactions(): WalletTransaction[] {
+  const m = (mins: number) => new Date(Date.now() - mins * 60_000);
   return [
     {
       id: "wtx-1",
-      type: "received",
-      amount: 0.0005,
+      type: "x402",
+      amount: 0.0002,
       asset: "sBTC",
-      counterparty: "ST3X…ContentBot",
-      timestamp: new Date(Date.now() - 1000 * 60 * 15),
+      counterparty: "ImageGen Pro",
+      timestamp: m(8),
       status: "confirmed",
-      txid: "0xabc123def456789012345678901234567890123456789012345678901234abcd",
+      txid: "0x7a3c91e2f4b8d6a5c3e1f0987654321abcdef0123456789abcdef0123456789",
+      memo: "Cyberpunk cityscape generation",
     },
     {
       id: "wtx-2",
-      type: "x402",
-      amount: 0.0012,
+      type: "received",
+      amount: 0.0005,
       asset: "sBTC",
-      counterparty: "ST4Y…ImageGenPro",
-      timestamp: new Date(Date.now() - 1000 * 60 * 45),
+      counterparty: "Content Factory swarm",
+      timestamp: m(22),
       status: "confirmed",
-      txid: "0xdef456789012345678901234567890123456789012345678901234567890abcd",
+      txid: "0xe5f8a1b4c7d0e3f6a9b2c5d8e1f4a7b0c3d6e9f2a5b8c1d4e7f0a3b6c9d2e5",
+      memo: "Revenue share payout",
     },
     {
       id: "wtx-3",
       type: "stream",
-      amount: 2.34,
+      amount: 12.47,
       asset: "USDCx",
-      counterparty: "ST5Z…StreamPlayer",
-      timestamp: new Date(Date.now() - 1000 * 60 * 120),
+      counterparty: "GuardianBot",
+      timestamp: m(45),
       status: "confirmed",
-      txid: "0xghi789012345678901234567890123456789012345678901234567890123abc",
+      txid: "0xb8c3d7e2f1a6094d5e8f2b3c6a9d0e1f4a7b2c5d8e1f0a3b6c9d2e5f8a1b4c7",
+      memo: "24h contract surveillance",
     },
     {
       id: "wtx-4",
       type: "x402",
-      amount: 0.0003,
+      amount: 0.001,
       asset: "sBTC",
-      counterparty: "ST6W…Summarizer50",
-      timestamp: new Date(Date.now() - 1000 * 60 * 200),
+      counterparty: "ClarityCopilot",
+      timestamp: m(120),
       status: "confirmed",
-      txid: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      txid: "0x4d2e8f1a6b3c9078e5d2a1b4c7f0e3d6a9b2c5e8f1a4d7b0c3e6f9a2b5c8d1",
+      memo: "payment-router.clar audit",
     },
     {
       id: "wtx-5",
-      type: "sent",
-      amount: 15.0,
-      asset: "USDCx",
-      counterparty: "ST7V…ShopBot",
-      timestamp: new Date(Date.now() - 1000 * 60 * 300),
+      type: "x402",
+      amount: 0.0005,
+      asset: "sBTC",
+      counterparty: "Summarizer-50",
+      timestamp: m(180),
       status: "confirmed",
-      txid: "0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+      txid: "0x1a2b3c4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890",
+      memo: "Q1 report summary",
+    },
+    {
+      id: "wtx-6",
+      type: "stream",
+      amount: 3.82,
+      asset: "USDCx",
+      counterparty: "StacksIndexer",
+      timestamp: m(240),
+      status: "pending",
+      txid: "0xf0e1d2c3b4a5968778695a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4",
+      memo: "SIP-009 event indexing — active",
+    },
+    {
+      id: "wtx-7",
+      type: "sent",
+      amount: 50.0,
+      asset: "USDCx",
+      counterparty: "DAO Treasury",
+      timestamp: m(360),
+      status: "confirmed",
+      txid: "0xa1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+      memo: "Governance contribution",
+    },
+    {
+      id: "wtx-8",
+      type: "x402",
+      amount: 0.00015,
+      asset: "sBTC",
+      counterparty: "SentimentPulse",
+      timestamp: m(480),
+      status: "confirmed",
+      txid: "0xd4e5f6a7b8c9012345678901234567890abcdef1234567890abcdef12345678",
+      memo: "$STX social sentiment scan",
     },
   ];
 }
@@ -143,12 +183,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const refreshBalances = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 800));
-    // Slightly randomize to show refresh effect
     setState((prev) => ({
       ...prev,
       assets: prev.assets.map((a) => ({
         ...a,
-        balance: a.balance + (Math.random() - 0.5) * a.balance * 0.02,
+        balance: a.balance + (Math.random() - 0.48) * a.balance * 0.015,
       })),
     }));
     toast.success("Balances refreshed");
@@ -174,11 +213,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           timestamp: new Date(),
           status: "confirmed",
           txid: mockTxid,
+          memo: `x402 payment to ${to}`,
         };
         return { ...prev, assets: newAssets, transactions: [newTx, ...prev.transactions] };
       });
 
-      toast.success(`Sent ${amount} ${asset} via x402!`, { id: mockTxid });
+      toast.success(`Sent ${amount} ${asset} via x402`, { id: mockTxid });
       return mockTxid;
     },
     []
