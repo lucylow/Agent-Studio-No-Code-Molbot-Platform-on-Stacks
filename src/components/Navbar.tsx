@@ -19,8 +19,9 @@ const NAV_ITEMS = [
 ];
 
 const studioDropdown = [
-  { to: "/studio", label: "New Agent" },
+  { to: "/studio", label: "No-Code Builder" },
   { to: "/marketplace", label: "Templates" },
+  { to: "/wallet", label: "Wallet" },
   { to: "/demo-wallet", label: "Wallet Demo" },
   { to: "/agents?filter=paused", label: "My Drafts" },
   { to: "/docs", label: "Import Flow" },
