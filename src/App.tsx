@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { WalletProvider } from "@/contexts/WalletContext";
 import ParticleBackground from "@/components/ParticleBackground";
 import Navbar from "@/components/Navbar";
 import FooterSection from "@/components/FooterSection";
@@ -24,6 +25,7 @@ import Architecture from "./pages/Architecture.tsx";
 import Tokenomics from "./pages/Tokenomics.tsx";
 import Roadmap from "./pages/Roadmap.tsx";
 import WalletDemoPage from "./pages/demo-wallet.tsx";
+import WalletDashboard from "./pages/WalletDashboard.tsx";
 
 import ApiExplorer from "./pages/ApiExplorer.tsx";
 import Simulator from "./pages/Simulator.tsx";
@@ -42,6 +44,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
+          <WalletProvider>
           <div className="relative min-h-screen bg-background overflow-x-hidden">
             <a href="#main-content" className="skip-to-content">Skip to content</a>
             <ParticleBackground />
@@ -67,6 +70,7 @@ const App = () => (
                   <Route path="/roadmap" element={<Roadmap />} />
 
                   <Route path="/demo-wallet" element={<WalletDemoPage />} />
+                  <Route path="/wallet" element={<WalletDashboard />} />
                   
                   <Route path="/deploy" element={<Deploy />} />
                   <Route path="/billing" element={<Billing />} />
@@ -80,6 +84,7 @@ const App = () => (
               <FooterSection />
             </div>
           </div>
+          </WalletProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
