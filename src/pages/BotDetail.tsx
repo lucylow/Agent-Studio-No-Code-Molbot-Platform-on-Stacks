@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ArrowLeft, Star, Zap, Clock, CheckCircle2, Loader2, AlertCircle, Send } from "lucide-react";
+import { SbtcPaymentFlow } from "@/components/SbtcPaymentFlow";
 import { fetchBotById, hireBot } from "@/mocks/api";
 import type { Molbot } from "@/types/molbot";
 import { SBTC_TO_USD, USDCX_TO_USD } from "@/types/molbot";
@@ -169,45 +170,18 @@ const BotDetail = () => {
 
           {/* Right: Hire Flow */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-3">
-            {/* Payment Visualization */}
-            <div className="gradient-border-card rounded-xl p-6 mb-6">
-              <h2 className="text-sm font-semibold text-foreground mb-4">Payment Flow</h2>
-              <div className="flex items-center justify-between py-4">
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <span className="text-lg">👤</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">You</p>
-                </div>
-
-                {/* Payment arrow */}
-                <div className="flex-1 mx-4 relative">
-                  <div className="h-px bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
-                  <AnimatePresence>
-                    {(hireState === "submitting" || hireState === "processing") && (
-                      <motion.div
-                        initial={{ left: "0%", opacity: 0 }}
-                        animate={{ left: "100%", opacity: [0, 1, 1, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary glow-cyan"
-                      />
-                    )}
-                  </AnimatePresence>
-                  <p className="text-[9px] text-muted-foreground text-center mt-2 font-mono">
-                    {bot.priceAmount} {bot.asset} via {bot.x402Enabled ? "x402" : "USDCx"}
-                  </p>
-                </div>
-
-                <div className="text-center">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2"
-                    style={{ backgroundColor: `${bot.avatarColor}20` }}
-                  >
-                    <span className="text-lg">{bot.avatarEmoji}</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">{bot.name}</p>
-                </div>
-              </div>
+            {/* sBTC Payment Flow */}
+            <div className="mb-6">
+              <SbtcPaymentFlow
+                botName={bot.name}
+                botOwner={bot.ownerHandle}
+                priceSats={bot.priceAmount}
+                asset={bot.asset}
+                jobId={jobId ?? undefined}
+                onPaymentComplete={(txid) => {
+                  toast.success(`Payment settled: ${txid.slice(0, 16)}…`);
+                }}
+              />
             </div>
 
             {/* Hire Form */}
