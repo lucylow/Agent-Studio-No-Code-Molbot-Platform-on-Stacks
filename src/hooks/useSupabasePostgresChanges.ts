@@ -20,13 +20,6 @@ type UseSupabasePostgresChangesArgs = {
   onPayload: (payload: PostgresChangesPayload) => void;
 };
 
-/**
- * Subscribes to Supabase Postgres changes with:
- * - server-side row filtering (when `filter` is provided)
- * - proper channel cleanup (prevents memory leaks)
- * - optional throttling (prevents re-render storms)
- * - pause/resume when the tab is hidden (battery-friendly)
- */
 export function useSupabasePostgresChanges({
   channelKey,
   table,
@@ -48,8 +41,6 @@ export function useSupabasePostgresChanges({
   useEffect(() => {
     if (!enabled) return;
 
-    let channel = supabase.channel(channelKey);
-
     const handlePayload = (payload: any) => {
       const normalized: PostgresChangesPayload = {
         eventType: payload.eventType,
@@ -62,7 +53,6 @@ export function useSupabasePostgresChanges({
         return;
       }
 
-      // Throttle: keep the latest payload and deliver it at most once per `throttleMs`.
       throttleStateRef.current.pendingPayload = normalized;
       if (throttleStateRef.current.timerId) return;
 
@@ -74,61 +64,25 @@ export function useSupabasePostgresChanges({
       }, throttleMs);
     };
 
-    // Attach handlers for requested event types.
-    for (const eventType of events) {
-      channel = channel.on(
-        "postgres_changes",
-        {
-          event: { type: eventType, schema, table },
-          filter: filter ?? undefined,
-        },
-        handlePayload
-      );
-    }
+    const channelConfig: Record<string, string> = { event: events.join(","), schema, table };
+    if (filter) channelConfig.filter = filter;
 
-    const start = () => {
-      if (document.visibilityState !== "visible") return;
-      channel.subscribe();
-    };
+    const channel = supabase
+      .channel(channelKey)
+      .on(
+        "postgres_changes" as any,
+        channelConfig as any,
+        handlePayload,
+      )
+      .subscribe();
 
-    const stop = () => {
+    return () => {
       throttleStateRef.current.pendingPayload = null;
       if (throttleStateRef.current.timerId) {
         clearTimeout(throttleStateRef.current.timerId);
         throttleStateRef.current.timerId = null;
       }
-      channel.unsubscribe();
       supabase.removeChannel(channel);
-    };
-
-    if (document.visibilityState === "visible") {
-      start();
-    }
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "hidden") stop();
-      else {
-        // Re-create channel after pausing so we don't re-use a closed subscription.
-        channel = supabase.channel(channelKey);
-        for (const eventType of events) {
-          channel = channel.on(
-            "postgres_changes",
-            {
-              event: { type: eventType, schema, table },
-              filter: filter ?? undefined,
-            },
-            handlePayload
-          );
-        }
-        start();
-      }
-    };
-
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -141,4 +95,3 @@ export function useSupabasePostgresChanges({
     throttleMs,
   ]);
 }
-
