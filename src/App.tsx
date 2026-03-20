@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import FooterSection from "@/components/FooterSection";
 import Index from "./pages/Index.tsx";
 import Marketplace from "./pages/Marketplace.tsx";
+import BotDetail from "./pages/BotDetail.tsx";
 import Docs from "./pages/Docs.tsx";
 import BountiesPage from "./pages/BountiesPage.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -50,6 +51,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/bots/:id" element={<BotDetail />} />
                   <Route path="/docs" element={<Docs />} />
                   <Route path="/bounties" element={<BountiesPage />} />
                   <Route path="/auth" element={<Auth />} />

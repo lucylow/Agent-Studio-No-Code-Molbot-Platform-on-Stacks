@@ -1,5 +1,6 @@
 import HeroSection from "@/components/HeroSection";
 import StatsSection from "@/components/StatsSection";
+import TrendingBotsStrip from "@/components/TrendingBotsStrip";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import X402LiveDemo from "@/components/X402LiveDemo";
 import StacksShowcase from "@/components/StacksShowcase";
@@ -13,6 +14,7 @@ const Index = () => (
   <>
     <HeroSection />
     <StatsSection />
+    <TrendingBotsStrip />
     <X402LiveDemo />
     <FeaturesGrid />
     <StacksShowcase />
