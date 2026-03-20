@@ -518,12 +518,6 @@ const NoCodeStudio = () => {
                     opacity: 1,
                     scale: isActiveStep ? 1.03 : 1,
                   }}
-                  style={{
-                    position: "absolute",
-                    left: node.x,
-                    top: node.y,
-                    width: 220,
-                  }}
                   onMouseDown={(e) => handleNodeMouseDown(node.instanceId, e)}
                   onClick={(e) => e.stopPropagation()}
                   className={`rounded-xl border transition-all cursor-move select-none ${
