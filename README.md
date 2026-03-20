@@ -1,4 +1,6 @@
-# 🤖 Agent Studio – No‑Code Molbot Platform on Stacks
+# MOLBOT STUDIO 🤖 
+### No‑Code Molbot Platform on Stacks
+### "Assemble. Execute. Earn."
 
 <p align="center">
   <img src="https://img.shields.io/badge/Stacks-Bitcoin%20Layer-5546FF?style=for-the-badge&logo=bitcoin" alt="Stacks" />
