@@ -14,7 +14,7 @@ const FooterSection = forwardRef<HTMLElement, ComponentPropsWithoutRef<"footer">
               <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center">
                 <Zap className="w-3 h-3 text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground">Agent Studio</span>
+              <span className="text-sm font-semibold text-foreground">Molbot Studio</span>
             </Link>
             <p className="text-xs text-muted-foreground/50 leading-relaxed max-w-[200px]">
               The no-code molbot economy on Bitcoin.
