@@ -4,10 +4,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Plus, Bot, Activity, Wallet, LogOut, AlertCircle, Sparkles, Users, Image, ArrowRight } from "lucide-react";
+import {
+  Plus, Bot, Activity, Wallet, LogOut, AlertCircle, Sparkles, Users, Image, ArrowRight,
+  TrendingUp, Zap, DollarSign, Radio,
+} from "lucide-react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { createBotSchema } from "@/lib/validation";
 import { useSupabasePostgresChanges } from "@/hooks/useSupabasePostgresChanges";
+import { mockWalletData, mockEarningsTimeSeries, mockTransactions } from "@/mocks/transactions";
+import { mockMolbots } from "@/mocks/molbots";
+import { SBTC_TO_USD } from "@/types/molbot";
 
 interface BotData {
   id: number;
@@ -22,8 +28,6 @@ interface BotData {
 }
 
 type DashboardProps = {
-  // "studio" shows the create/register flow first.
-  // "agents" shows the agent list/management view.
   initialView?: "studio" | "agents";
 };
 
@@ -47,22 +51,17 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
 
   const botsFilter = searchParams.get("filter");
   const visibleBots =
-    botsFilter === "active"
-      ? bots.filter((b) => b.active)
-      : botsFilter === "paused"
-        ? bots.filter((b) => !b.active)
-        : bots;
+    botsFilter === "active" ? bots.filter((b) => b.active)
+    : botsFilter === "paused" ? bots.filter((b) => !b.active)
+    : bots;
 
   const pageTitle = initialView === "studio" ? "Studio" : "Agents";
+  const wallet = mockWalletData;
 
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
-    if (isDemo) {
-      setBots(DEMO_BOTS);
-      setLoading(false);
-    } else {
-      loadBots();
-    }
+    if (isDemo) { setBots(DEMO_BOTS); setLoading(false); }
+    else { loadBots(); }
   }, [user, isDemo]);
 
   useSupabasePostgresChanges({
@@ -87,13 +86,10 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
             const next = prev.some((b) => b.id === row.id)
               ? prev.map((b) => (b.id === row.id ? row : b))
               : [row, ...prev];
-
-            // Keep newest first (matches initial load order).
             next.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
             return next;
           }
-          default:
-            return prev;
+          default: return prev;
         }
       });
     },
@@ -111,9 +107,7 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
     } catch (err: any) {
       console.error("Failed to load bots:", err);
       toast.error("Failed to load your bots. Please refresh the page.");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const createBot = async () => {
@@ -121,10 +115,7 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
     const result = createBotSchema.safeParse(newBot);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
-      result.error.errors.forEach((e) => {
-        const field = e.path[0] as string;
-        fieldErrors[field] = e.message;
-      });
+      result.error.errors.forEach((e) => { fieldErrors[e.path[0] as string] = e.message; });
       setErrors(fieldErrors);
       toast.error("Please fix the validation errors");
       return;
@@ -133,20 +124,13 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
     if (isDemo) {
       const demoBotId = bots.length + 5;
       const newDemoBot: BotData = {
-        id: demoBotId,
-        name: result.data.name,
-        skills: result.data.skills,
-        price_model: result.data.priceModel,
-        price_amount: result.data.priceAmount,
-        price_asset: result.data.priceAsset,
-        active: true,
-        on_chain_id: 2000 + demoBotId,
+        id: demoBotId, name: result.data.name, skills: result.data.skills,
+        price_model: result.data.priceModel, price_amount: result.data.priceAmount,
+        price_asset: result.data.priceAsset, active: true, on_chain_id: 2000 + demoBotId,
         created_at: new Date().toISOString(),
       };
       setBots((prev) => [newDemoBot, ...prev]);
-      toast.success(`Bot "${result.data.name}" created!`, {
-        description: `Demo On-chain ID: ${newDemoBot.on_chain_id}`,
-      });
+      toast.success(`Bot "${result.data.name}" created!`, { description: `Demo On-chain ID: ${newDemoBot.on_chain_id}` });
       setShowCreate(false);
       setNewBot({ name: "", skills: "", priceModel: "fixed", priceAmount: "0.001", priceAsset: "sBTC" });
       setErrors({});
@@ -156,7 +140,6 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
     setCreating(true);
     try {
       const session = await supabase.auth.getSession();
-      const idempotencyKey = crypto.randomUUID();
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-api?action=create-bot`,
         {
@@ -165,13 +148,11 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.data.session?.access_token}`,
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "idempotency-key": idempotencyKey,
+            "idempotency-key": crypto.randomUUID(),
           },
           body: JSON.stringify({
-            name: result.data.name,
-            skills: result.data.skills,
-            priceModel: result.data.priceModel,
-            priceAmount: result.data.priceAmount,
+            name: result.data.name, skills: result.data.skills,
+            priceModel: result.data.priceModel, priceAmount: result.data.priceAmount,
             priceAsset: result.data.priceAsset,
           }),
         }
@@ -185,17 +166,11 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
       setNewBot({ name: "", skills: "", priceModel: "fixed", priceAmount: "0.001", priceAsset: "sBTC" });
       setErrors({});
       loadBots();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create bot");
-    } finally {
-      setCreating(false);
-    }
+    } catch (err: any) { toast.error(err.message || "Failed to create bot"); }
+    finally { setCreating(false); }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
+  const handleSignOut = async () => { await signOut(); navigate("/"); };
 
   if (!user) return null;
 
@@ -206,9 +181,14 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
       </p>
     ) : null;
 
+  // Recent activity from mock
+  const recentActivity = mockTransactions.slice(0, 5);
+  const botNameMap = Object.fromEntries(mockMolbots.map((b) => [b.id, b.name]));
+
   return (
     <div className="min-h-screen bg-background pt-24 pb-16">
       <div className="container mx-auto px-4">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">{pageTitle}</h1>
@@ -238,55 +218,26 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Name <span className="text-destructive">*</span></label>
-                <input
-                  value={newBot.name}
-                  onChange={e => { setNewBot({ ...newBot, name: e.target.value }); setErrors(prev => ({ ...prev, name: '' })); }}
-                  placeholder="ImageGen Pro"
-                  maxLength={64}
-                  className={`w-full bg-muted/20 border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40 ${errors.name ? 'border-destructive' : 'border-border'}`}
-                />
+                <input value={newBot.name} onChange={e => { setNewBot({ ...newBot, name: e.target.value }); setErrors(prev => ({ ...prev, name: '' })); }} placeholder="ImageGen Pro" maxLength={64} className={`w-full bg-muted/20 border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40 ${errors.name ? 'border-destructive' : 'border-border'}`} />
                 <FieldError field="name" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Skills (comma-separated, max 10)</label>
-                <input
-                  value={newBot.skills}
-                  onChange={e => { setNewBot({ ...newBot, skills: e.target.value }); setErrors(prev => ({ ...prev, skills: '' })); }}
-                  placeholder="image-gen, text-to-image"
-                  maxLength={500}
-                  className={`w-full bg-muted/20 border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40 ${errors.skills ? 'border-destructive' : 'border-border'}`}
-                />
+                <label className="text-xs text-muted-foreground mb-1 block">Skills (comma-separated)</label>
+                <input value={newBot.skills} onChange={e => { setNewBot({ ...newBot, skills: e.target.value }); setErrors(prev => ({ ...prev, skills: '' })); }} placeholder="image-gen, text-to-image" maxLength={500} className={`w-full bg-muted/20 border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40 ${errors.skills ? 'border-destructive' : 'border-border'}`} />
                 <FieldError field="skills" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Price Model</label>
-                <select
-                  value={newBot.priceModel}
-                  onChange={e => setNewBot({ ...newBot, priceModel: e.target.value })}
-                  className="w-full bg-muted/20 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40"
-                >
+                <select value={newBot.priceModel} onChange={e => setNewBot({ ...newBot, priceModel: e.target.value })} className="w-full bg-muted/20 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40">
                   <option value="fixed">Fixed (x402)</option>
                   <option value="stream">Stream (USDCx)</option>
                 </select>
-                <FieldError field="priceModel" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Price</label>
                 <div className="flex gap-2">
-                  <input
-                    type="number"
-                    step="0.0001"
-                    min="0.000001"
-                    max="1000000"
-                    value={newBot.priceAmount}
-                    onChange={e => { setNewBot({ ...newBot, priceAmount: e.target.value }); setErrors(prev => ({ ...prev, priceAmount: '' })); }}
-                    className={`flex-1 bg-muted/20 border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40 ${errors.priceAmount ? 'border-destructive' : 'border-border'}`}
-                  />
-                  <select
-                    value={newBot.priceAsset}
-                    onChange={e => setNewBot({ ...newBot, priceAsset: e.target.value })}
-                    className="bg-muted/20 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40"
-                  >
+                  <input type="number" step="0.0001" min="0.000001" max="1000000" value={newBot.priceAmount} onChange={e => { setNewBot({ ...newBot, priceAmount: e.target.value }); setErrors(prev => ({ ...prev, priceAmount: '' })); }} className={`flex-1 bg-muted/20 border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40 ${errors.priceAmount ? 'border-destructive' : 'border-border'}`} />
+                  <select value={newBot.priceAsset} onChange={e => setNewBot({ ...newBot, priceAsset: e.target.value })} className="bg-muted/20 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40">
                     <option value="sBTC">sBTC</option>
                     <option value="USDCx">USDCx</option>
                   </select>
@@ -295,32 +246,106 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
               </div>
             </div>
             <div className="flex gap-3 mt-4">
-              <Button onClick={createBot} disabled={creating} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                {creating ? "Registering..." : "Create & Register On-Chain"}
-              </Button>
+              <Button onClick={createBot} disabled={creating} className="bg-primary text-primary-foreground hover:bg-primary/90">{creating ? "Registering..." : "Create & Register On-Chain"}</Button>
               <Button variant="outline" onClick={() => { setShowCreate(false); setErrors({}); }} className="border-border text-muted-foreground">Cancel</Button>
             </div>
           </motion.div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="glass-card rounded-xl p-4 text-center">
-            <Bot className="w-5 h-5 text-primary mx-auto mb-2" />
-            <div className="text-2xl font-bold text-foreground">{bots.length}</div>
-            <div className="text-xs text-muted-foreground">My Bots</div>
-          </div>
-          <div className="glass-card rounded-xl p-4 text-center">
-            <Activity className="w-5 h-5 text-secondary mx-auto mb-2" />
-            <div className="text-2xl font-bold text-foreground">{bots.filter(b => b.active).length}</div>
-            <div className="text-xs text-muted-foreground">Active</div>
-          </div>
-          <div className="glass-card rounded-xl p-4 text-center">
-            <Wallet className="w-5 h-5 text-primary mx-auto mb-2" />
-            <div className="text-2xl font-bold text-foreground font-mono">
-              {bots.reduce((sum, b) => sum + (b.price_amount || 0), 0).toFixed(4)}
+        {/* Wallet Metrics */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="w-4 h-4 text-primary" />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">sBTC Balance</span>
             </div>
-            <div className="text-xs text-muted-foreground">Total Value</div>
+            <p className="text-xl font-bold text-foreground font-mono tabular-nums">{wallet.sbtcBalance.toFixed(4)}</p>
+            <p className="text-[10px] text-muted-foreground">${(wallet.sbtcBalance * SBTC_TO_USD).toFixed(2)}</p>
+          </div>
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-secondary" />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">USDCx Balance</span>
+            </div>
+            <p className="text-xl font-bold text-foreground font-mono tabular-nums">{wallet.usdcxBalance.toFixed(2)}</p>
+            <p className="text-[10px] text-muted-foreground">${wallet.usdcxBalance.toFixed(2)}</p>
+          </div>
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Radio className="w-4 h-4 text-green-400" />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Active Streams</span>
+            </div>
+            <p className="text-xl font-bold text-foreground tabular-nums">{wallet.activeStreams}</p>
+          </div>
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Bot className="w-4 h-4 text-primary" />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">My Bots</span>
+            </div>
+            <p className="text-xl font-bold text-foreground tabular-nums">{bots.length}</p>
+          </div>
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Activity className="w-4 h-4 text-primary" />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Active</span>
+            </div>
+            <p className="text-xl font-bold text-foreground tabular-nums">{bots.filter(b => b.active).length}</p>
+          </div>
+        </div>
+
+        {/* Earnings + Activity side by side */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          {/* Earnings chart (simple bars) */}
+          <div className="lg:col-span-2 gradient-border-card rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-foreground mb-4">Earnings (7 days)</h2>
+            <div className="flex items-end gap-2 h-32">
+              {mockEarningsTimeSeries.map((d, i) => {
+                const total = d.sbtcUsd + d.usdcx;
+                const maxVal = Math.max(...mockEarningsTimeSeries.map(x => x.sbtcUsd + x.usdcx));
+                const pct = (total / maxVal) * 100;
+                const sbtcPct = (d.sbtcUsd / total) * 100;
+                return (
+                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full rounded-t-md overflow-hidden relative"
+                      style={{ height: `${pct}%` }}
+                    >
+                      <div className="absolute bottom-0 w-full bg-primary/40" style={{ height: `${sbtcPct}%` }} />
+                      <div className="absolute top-0 w-full bg-secondary/40" style={{ height: `${100 - sbtcPct}%` }} />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground">{d.date}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-primary/40" /> sBTC (USD)</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-secondary/40" /> USDCx</span>
+            </div>
+          </div>
+
+          {/* Activity Feed */}
+          <div className="gradient-border-card rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-foreground mb-4">Recent Activity</h2>
+            <div className="space-y-3">
+              {recentActivity.map((tx) => (
+                <div key={tx.id} className="flex items-start gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center mt-0.5 ${
+                    tx.protocol === "x402" ? "bg-primary/10" : "bg-secondary/10"
+                  }`}>
+                    <Zap className={`w-3 h-3 ${tx.protocol === "x402" ? "text-primary" : "text-secondary"}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-foreground truncate">
+                      {botNameMap[tx.fromBotId] || tx.fromBotId} → {botNameMap[tx.toBotId] || tx.toBotId}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground font-mono">
+                      {tx.amount} {tx.asset} · {tx.memo}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -331,15 +356,10 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
             {[
               { icon: Sparkles, label: "Mint NFT", desc: "Turn bots into NFTs", to: "/nfts", color: "text-secondary" },
               { icon: Users, label: "Join Swarm", desc: "Collaborate with bots", to: "/swarms", color: "text-primary" },
-              { icon: Image, label: "Generate Content", desc: "x402 Content Gen", to: "/marketplace", color: "text-accent" },
-              { icon: Activity, label: "DAO Governance", desc: "Vote on proposals", to: "/governance", color: "text-secondary" },
+              { icon: Image, label: "Marketplace", desc: "Hire molbots", to: "/marketplace", color: "text-accent" },
+              { icon: Activity, label: "Governance", desc: "Vote on proposals", to: "/governance", color: "text-secondary" },
             ].map((action) => (
-              <Link
-                key={action.label}
-                to={action.to}
-                className="glass-card rounded-xl p-4 hover:border-primary/30 transition-all group"
-                aria-label={`${action.label}: ${action.desc}`}
-              >
+              <Link key={action.label} to={action.to} className="glass-card rounded-xl p-4 hover:border-primary/30 transition-all group">
                 <action.icon className={`w-5 h-5 ${action.color} mb-2`} />
                 <p className="text-sm font-semibold text-foreground">{action.label}</p>
                 <p className="text-[10px] text-muted-foreground">{action.desc}</p>
@@ -360,9 +380,9 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label="Your bots">
             {visibleBots.map((bot) => (
-              <motion.div key={bot.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="gradient-border-card rounded-xl p-5" role="listitem" aria-label={`Bot: ${bot.name}`}>
+              <motion.div key={bot.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="gradient-border-card rounded-xl p-5" role="listitem">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-2xl" role="img" aria-label="Robot">🤖</span>
+                  <span className="text-2xl">🤖</span>
                   <span className={`text-[11px] font-mono px-2 py-1 rounded-md ${bot.active ? "bg-primary/10 text-primary border border-primary/15" : "bg-muted text-muted-foreground"}`}>
                     {bot.active ? "active" : "inactive"}
                   </span>
@@ -372,9 +392,7 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
                   <span className="font-mono">{bot.price_amount} {bot.price_asset}</span>
                   <span>{bot.price_model === "stream" ? "stream" : "per call"}</span>
                 </div>
-                {bot.on_chain_id && (
-                  <p className="text-[10px] text-muted-foreground/50 font-mono">Chain ID: {bot.on_chain_id}</p>
-                )}
+                {bot.on_chain_id && <p className="text-[10px] text-muted-foreground/50 font-mono">Chain ID: {bot.on_chain_id}</p>}
               </motion.div>
             ))}
           </div>

@@ -1,252 +1,314 @@
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Search, Sparkles } from "lucide-react";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { Search, Sparkles, Star, Clock, Zap, Filter, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import SkillBotCard from "@/components/SkillBotCard";
-import PriceDisplay from "@/components/PriceDisplay";
-import { getUserFriendlyError } from "@/lib/errorHandler";
+import { Link } from "react-router-dom";
+import { mockMolbots } from "@/mocks/molbots";
+import { hireBot } from "@/mocks/api";
+import type { Molbot, Asset } from "@/types/molbot";
+import { SBTC_TO_USD, USDCX_TO_USD } from "@/types/molbot";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface BotData {
-  id: number;
-  name: string;
-  skills: any;
-  price_model: string;
-  price_amount: number;
-  price_asset: string;
-  active: boolean;
-  on_chain_id: number | null;
-}
+const TAG_FILTERS = ["All", "content", "ai", "data", "payments", "dev", "security", "commerce", "nft", "governance", "consumer", "b2b"] as const;
 
-const defaultBots = [
-  { name: "ImageGen Pro", desc: "Generates high-quality images from prompts.", price: "0.002 sBTC", unit: "per image", badge: "verified", badgeColor: "primary" as const },
-  { name: "DataFetch", desc: "Pulls real-time data from any API.", price: "0.001 sBTC", unit: "per call", badge: "x402 ready", badgeColor: "primary" as const },
-  { name: "StreamPlayer", desc: "Streams audio/video, paid per second via USDCx.", price: "0.01 USDCx", unit: "/min", badge: "USDCx", badgeColor: "secondary" as const },
-  { name: "Summarizer", desc: "Condenses long texts into concise summaries.", price: "0.0005 sBTC", unit: "per request", badge: "verified", badgeColor: "primary" as const },
-  { name: "Translator", desc: "Real-time multi-language translation bot.", price: "0.001 sBTC", unit: "per 1k chars", badge: "x402 ready", badgeColor: "primary" as const },
-  { name: "WeatherOracle", desc: "Provides hyper-local weather forecasts.", price: "0.005 USDCx", unit: "per query", badge: "USDCx", badgeColor: "secondary" as const },
-];
+const fiatPrice = (amount: number, asset: Asset) =>
+  asset === "sBTC" ? (amount * SBTC_TO_USD).toFixed(2) : (amount * USDCX_TO_USD).toFixed(2);
+
+const BotCard = ({ bot, onHire }: { bot: Molbot; onHire: (bot: Molbot, prompt: string) => void }) => {
+  const [quickHire, setQuickHire] = useState(false);
+  const [prompt, setPrompt] = useState("");
+  const [hiring, setHiring] = useState(false);
+
+  const handleQuickHire = async () => {
+    if (!prompt.trim()) { toast.error("Enter a prompt"); return; }
+    setHiring(true);
+    await onHire(bot, prompt);
+    setHiring(false);
+    setQuickHire(false);
+    setPrompt("");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="gradient-border-card rounded-xl p-6 flex flex-col group relative"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div
+          className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+          style={{ backgroundColor: `${bot.avatarColor}20` }}
+        >
+          {bot.avatarEmoji}
+        </div>
+        <div className="flex gap-1.5">
+          {bot.x402Enabled && (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/15">
+              x402
+            </span>
+          )}
+          {bot.usdcxStreaming && (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-secondary/10 text-secondary border border-secondary/15">
+              USDCx
+            </span>
+          )}
+        </div>
+      </div>
+
+      <h3 className="text-lg font-semibold text-foreground mb-0.5">{bot.name}</h3>
+      <p className="text-[11px] text-muted-foreground/60 font-mono mb-2">{bot.ownerHandle}</p>
+      <p className="text-sm text-muted-foreground mb-4 flex-1 leading-relaxed line-clamp-2">{bot.shortDescription}</p>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-3 gap-2 mb-4 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <Star className="w-3 h-3 text-yellow-400" />
+          <span className="tabular-nums">{bot.rating.toFixed(1)}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Zap className="w-3 h-3 text-primary" />
+          <span className="tabular-nums">{bot.jobsCompleted.toLocaleString()}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Clock className="w-3 h-3 text-muted-foreground" />
+          <span className="tabular-nums">{(bot.averageLatencyMs / 1000).toFixed(1)}s</span>
+        </div>
+      </div>
+
+      {/* Price */}
+      <div className="flex items-center justify-between mb-4 py-2 border-t border-b border-border/30">
+        <span className="text-primary font-mono text-sm font-semibold">
+          {bot.priceAmount} {bot.asset}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          ~${fiatPrice(bot.priceAmount, bot.asset)} · {bot.pricingModel === "stream" ? "/min" : "per call"}
+        </span>
+      </div>
+
+      {/* Tags */}
+      <div className="flex flex-wrap gap-1 mb-4">
+        {bot.tags.slice(0, 3).map((tag) => (
+          <span key={tag} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-muted/30 text-muted-foreground">
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Quick Hire inline */}
+      {quickHire ? (
+        <div className="space-y-2">
+          <input
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder={`What should ${bot.name} do?`}
+            className="w-full bg-muted/20 border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary/40"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && handleQuickHire()}
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={handleQuickHire}
+              disabled={hiring}
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8"
+            >
+              {hiring ? "Hiring..." : `Hire (${bot.priceAmount} ${bot.asset})`}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setQuickHire(false)} className="text-xs h-8">
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <Link to={`/bots/${bot.id}`} className="flex-1">
+            <Button variant="outline" className="w-full border-border text-muted-foreground hover:text-foreground text-xs h-9">
+              View Details
+            </Button>
+          </Link>
+          <Button
+            onClick={() => setQuickHire(true)}
+            className="flex-1 bg-primary/8 text-primary hover:bg-primary/15 border border-primary/15 text-xs h-9"
+          >
+            Quick Hire
+          </Button>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+const SkeletonCards = () => (
+  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <div key={i} className="gradient-border-card rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="w-12 h-12 rounded-xl" />
+          <Skeleton className="w-16 h-5 rounded" />
+        </div>
+        <Skeleton className="h-5 w-3/4 mb-2" />
+        <Skeleton className="h-3 w-1/2 mb-3" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-8 w-full" />
+      </div>
+    ))}
+  </div>
+);
 
 const Marketplace = () => {
-  const { user } = useAuth();
+  const { isDemo } = useAuth();
+  const [bots, setBots] = useState<Molbot[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [liveBots, setLiveBots] = useState<BotData[]>([]);
+  const [activeTag, setActiveTag] = useState("All");
+  const [assetFilter, setAssetFilter] = useState<"all" | "sBTC" | "USDCx">("all");
+  const [sortBy, setSortBy] = useState<"popular" | "rating" | "price">("popular");
 
   useEffect(() => {
-    supabase
-      .from("bots")
-      .select("*")
-      .eq("active", true)
-      .order("created_at", { ascending: false })
-      .limit(50)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Failed to load marketplace bots:", error);
-          toast.error("Failed to load bots. Please refresh.");
-          return;
-        }
-        setLiveBots((data as BotData[]) || []);
-      });
+    const timer = setTimeout(() => {
+      setBots(mockMolbots);
+      setLoading(false);
+    }, 400);
+    return () => clearTimeout(timer);
   }, []);
 
-  const filteredDefault = defaultBots.filter(
-    (b) => b.name.toLowerCase().includes(search.toLowerCase()) || b.desc.toLowerCase().includes(search.toLowerCase())
-  );
-  const filteredLive = liveBots.filter(
-    (b) => b.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const hireLiveBot = async (bot: BotData) => {
-    if (!user) {
-      toast.error("Please sign in to hire bots");
-      return;
-    }
-
-    // Find user's first bot as requester
-    const { data: userBots } = await supabase
-      .from("bots")
-      .select("id")
-      .eq("owner_id", user.id)
-      .limit(1);
-
-    if (!userBots || userBots.length === 0) {
-      toast.error("You need to create a bot first to hire other bots", {
-        description: "Go to Dashboard → Create Bot",
-      });
-      return;
-    }
-
-    try {
-      const session = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-api?action=hire-bot`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.data.session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "idempotency-key": crypto.randomUUID(),
-          },
-          body: JSON.stringify({
-            requesterBotId: userBots[0].id,
-            providerBotId: bot.id,
-          }),
-        }
+  const filtered = useMemo(() => {
+    let result = bots;
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (b) =>
+          b.name.toLowerCase().includes(q) ||
+          b.shortDescription.toLowerCase().includes(q) ||
+          b.tags.some((t) => t.includes(q)) ||
+          b.skills.some((s) => s.name.toLowerCase().includes(q))
       );
+    }
+    if (activeTag !== "All") {
+      result = result.filter((b) => b.tags.includes(activeTag));
+    }
+    if (assetFilter !== "all") {
+      result = result.filter((b) => b.asset === assetFilter);
+    }
+    // Sort
+    if (sortBy === "popular") result = [...result].sort((a, b) => b.jobsCompleted - a.jobsCompleted);
+    else if (sortBy === "rating") result = [...result].sort((a, b) => b.rating - a.rating);
+    else result = [...result].sort((a, b) => a.priceAmount - b.priceAmount);
+    return result;
+  }, [bots, search, activeTag, assetFilter, sortBy]);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
+  const handleHire = async (bot: Molbot, prompt: string) => {
+    try {
+      const { jobId, txId } = await hireBot(bot.id, prompt);
       toast.success(`Hired ${bot.name}!`, {
-        description: `Paid ${data.transaction.amount} ${data.transaction.asset} via ${data.transaction.protocol}`,
+        description: `Job ${jobId.slice(0, 12)} · Paid ${bot.priceAmount} ${bot.asset} via ${bot.x402Enabled ? "x402" : "USDCx stream"}`,
       });
     } catch (err: any) {
-      toast.error(getUserFriendlyError(err));
+      toast.error(err.message);
     }
   };
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-16">
       <div className="container mx-auto px-4">
+        {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
           <p className="text-sm font-medium text-primary mb-3 tracking-wider uppercase">Explore</p>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Bot Marketplace</h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">
-            Discover bots built by the community – hire them or generate content with x402.
+            Discover {bots.length} autonomous molbots — hire them instantly with x402 sBTC or USDCx streaming.
           </p>
-          <div className="relative max-w-md mx-auto">
+
+          {/* Search */}
+          <div className="relative max-w-md mx-auto mb-6">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search bots..."
+              placeholder="Search bots, skills, tags..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-muted/30 border border-border rounded-xl pl-11 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
             />
           </div>
-        </motion.div>
 
-        {/* x402 Content Generator — Featured */}
-        {(!search || "content generator".includes(search.toLowerCase())) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="mb-10"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-secondary" />
-              <h2 className="text-lg font-semibold text-foreground">x402 Content Generator</h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-secondary/10 text-secondary border border-secondary/15">
-                FEATURED
-              </span>
-            </div>
-            <div className="max-w-xl">
-              <SkillBotCard />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Live Bots from Database */}
-        {filteredLive.length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Live Bots
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredLive.map((bot, i) => (
-                <motion.div
-                  key={bot.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="gradient-border-card rounded-xl p-6 flex flex-col"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-muted/30 flex items-center justify-center text-2xl">🤖</div>
-                    <span className={`text-[11px] font-mono px-2 py-1 rounded-md ${
-                      bot.price_asset === "USDCx"
-                        ? "bg-secondary/10 text-secondary border border-secondary/15"
-                        : "bg-primary/10 text-primary border border-primary/15"
-                    }`}>
-                      {bot.price_model === "stream" ? "USDCx stream" : "x402"}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1">{bot.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-5 flex-1">
-                    {Array.isArray(bot.skills) && bot.skills.length > 0
-                      ? `Skills: ${(bot.skills as string[]).join(", ")}`
-                      : "General purpose bot"}
-                  </p>
-                  <div className="flex items-center justify-between mb-4 py-2 border-t border-b border-border/30">
-                    <PriceDisplay amount={bot.price_amount} asset={bot.price_asset} />
-                    <span className="text-xs text-muted-foreground">
-                      {bot.price_model === "stream" ? "/min" : "per call"}
-                    </span>
-                  </div>
-                  {bot.on_chain_id && (
-                    <p className="text-[10px] text-muted-foreground/50 font-mono mb-3">
-                      Chain ID: {bot.on_chain_id}
-                    </p>
-                  )}
-                  <Button
-                    className="w-full bg-primary/8 text-primary hover:bg-primary/15 border border-primary/15 font-semibold transition-all duration-200"
-                    onClick={() => hireLiveBot(bot)}
-                  >
-                    Hire Bot
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Default showcase bots */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-4">Showcase Bots</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDefault.map((bot, i) => (
-              <motion.div
-                key={bot.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + i * 0.06 }}
-                className="gradient-border-card rounded-xl p-6 flex flex-col"
+          {/* Tag Filters */}
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
+            {TAG_FILTERS.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setActiveTag(tag)}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-all ${
+                  activeTag === tag
+                    ? "bg-primary/15 text-primary border border-primary/25 font-semibold"
+                    : "bg-muted/20 text-muted-foreground border border-transparent hover:border-border hover:text-foreground"
+                }`}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-muted/30 flex items-center justify-center text-2xl">🤖</div>
-                  <span className={`text-[11px] font-mono px-2 py-1 rounded-md ${
-                    bot.badgeColor === "primary"
-                      ? "bg-primary/10 text-primary border border-primary/15"
-                      : "bg-secondary/10 text-secondary border border-secondary/15"
-                  }`}>
-                    {bot.badge}
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">{bot.name}</h3>
-                <p className="text-sm text-muted-foreground mb-5 flex-1 leading-relaxed">{bot.desc}</p>
-                <div className="flex items-center justify-between mb-4 py-2 border-t border-b border-border/30">
-                  <span className="text-primary font-mono text-sm font-semibold">{bot.price}</span>
-                  <span className="text-xs text-muted-foreground">{bot.unit}</span>
-                </div>
-                <Button
-                  className="w-full bg-primary/8 text-primary hover:bg-primary/15 border border-primary/15 font-semibold transition-all duration-200"
-                  onClick={() => toast.info(`Hiring ${bot.name}...`, { description: "Mock: x402 payment would be initiated." })}
-                >
-                  Hire Bot
-                </Button>
-              </motion.div>
+                {tag === "All" ? "All" : tag}
+              </button>
             ))}
           </div>
-        </div>
 
-        {filteredDefault.length === 0 && filteredLive.length === 0 && (
-          <p className="text-center text-muted-foreground mt-12">No bots found matching "{search}"</p>
+          {/* Asset + Sort */}
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center gap-1 bg-muted/20 rounded-lg p-0.5">
+              {(["all", "sBTC", "USDCx"] as const).map((a) => (
+                <button
+                  key={a}
+                  onClick={() => setAssetFilter(a)}
+                  className={`px-3 py-1 text-[11px] font-mono rounded-md transition-all ${
+                    assetFilter === a
+                      ? a === "sBTC"
+                        ? "bg-primary/15 text-primary"
+                        : a === "USDCx"
+                        ? "bg-secondary/15 text-secondary"
+                        : "bg-foreground/10 text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {a === "all" ? "Both" : a}
+                </button>
+              ))}
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-muted/20 border border-border rounded-lg px-3 py-1.5 text-xs text-foreground"
+            >
+              <option value="popular">Most Popular</option>
+              <option value="rating">Highest Rated</option>
+              <option value="price">Lowest Price</option>
+            </select>
+          </div>
+        </motion.div>
+
+        {/* Grid */}
+        {loading ? (
+          <SkeletonCards />
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <Filter className="w-10 h-10 text-muted-foreground/30 mx-auto mb-4" />
+            <p className="text-muted-foreground">No bots match your filters.</p>
+            <Button
+              variant="link"
+              onClick={() => { setSearch(""); setActiveTag("All"); setAssetFilter("all"); }}
+              className="text-primary mt-2"
+            >
+              Clear filters
+            </Button>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((bot, i) => (
+              <BotCard key={bot.id} bot={bot} onHire={handleHire} />
+            ))}
+          </div>
         )}
+
+        <p className="text-center text-xs text-muted-foreground/40 mt-12">
+          {filtered.length} of {bots.length} bots shown
+        </p>
       </div>
     </div>
   );
