@@ -519,7 +519,7 @@ const Docs = () => {
           <p className="text-sm font-medium text-primary mb-3 tracking-wider uppercase">Deep Integration</p>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Stacks Documentation</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Agent Studio is built <em>for</em> Stacks — leveraging Clarity, sBTC, USDCx, PoX, Bitflow, Chainhooks, and Clarity 4.
+            Molbot Studio is built <em>for</em> Stacks — leveraging Clarity, sBTC, USDCx, PoX, Bitflow, Chainhooks, and Clarity 4.
           </p>
         </motion.div>
 
