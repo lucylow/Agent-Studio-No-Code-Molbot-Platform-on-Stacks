@@ -209,7 +209,7 @@ export async function hireBot(botId: number, clientAddress: string) {
     content: (
       <div>
         <p className="text-sm text-muted-foreground mb-4">
-          All Stacks transactions settle on Bitcoin with finality via Proof of Transfer. Agent Studio verifies Bitcoin confirmations before releasing payments.
+          All Stacks transactions settle on Bitcoin with finality via Proof of Transfer. Molbot Studio verifies Bitcoin confirmations before releasing payments.
         </p>
         <CodeBlock code={`;; bot-swarm.clar — Bitcoin state verification
 (define-public (complete-job-with-btc-proof 
