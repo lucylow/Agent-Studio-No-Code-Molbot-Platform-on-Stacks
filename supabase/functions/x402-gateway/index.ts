@@ -707,6 +707,135 @@ function generateServiceResult(service: string, provider: any) {
   };
 }
 
+// ========== x402 Quote System ==========
+
+const QUOTE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+// In-memory quote store (resets on cold start — acceptable for hackathon demo)
+const quoteStore = new Map<string, {
+  quote: Record<string, unknown>;
+  settled: boolean;
+  txid?: string;
+  receipt?: Record<string, unknown>;
+}>();
+const idempotencyIndex = new Map<string, string>();
+
+async function handleRequestQuote(ctx: RequestContext) {
+  const payerAddress = validateString(ctx.body.payerAddress, 'payerAddress', 10, 128);
+  const payeeAddress = validateString(ctx.body.payeeAddress, 'payeeAddress', 10, 128);
+  const asset = validateEnum(ctx.body.asset || 'sBTC', 'asset', ['sBTC', 'USDCx']);
+  const mode = validateEnum(ctx.body.mode || 'one_time', 'mode', ['one_time', 'stream']);
+  const amount = validateNumber(ctx.body.amount, 'amount', 0.000001, 1000000);
+  const memo = typeof ctx.body.memo === 'string' ? ctx.body.memo.slice(0, 120) : '';
+  const jobId = validateString(ctx.body.jobId, 'jobId', 1, 128);
+  const botId = validateString(ctx.body.botId, 'botId', 1, 128);
+  const idempotencyKey = validateString(ctx.body.idempotencyKey, 'idempotencyKey', 8, 128);
+
+  // Idempotency check
+  const existingQuoteId = idempotencyIndex.get(idempotencyKey);
+  if (existingQuoteId) {
+    const existing = quoteStore.get(existingQuoteId);
+    if (existing && new Date(existing.quote.expiresAt as string).getTime() > Date.now()) {
+      return jsonResponse(existing.quote);
+    }
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + QUOTE_TTL_MS);
+  const quoteId = crypto.randomUUID();
+
+  // Simple HMAC-like signature (demo: hash of concatenated fields)
+  const payload = [
+    'x402', '1', quoteId, jobId, botId, payerAddress, payeeAddress,
+    asset, mode, amount.toFixed(6), memo, idempotencyKey, expiresAt.toISOString(),
+  ].join('|');
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(payload));
+  const signature = Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  const quote = {
+    protocol: 'x402',
+    version: '1',
+    quoteId,
+    jobId,
+    botId,
+    payerAddress,
+    payeeAddress,
+    asset,
+    mode,
+    amount,
+    memo,
+    idempotencyKey,
+    expiresAt: expiresAt.toISOString(),
+    createdAt: now.toISOString(),
+    signature,
+  };
+
+  quoteStore.set(quoteId, { quote, settled: false });
+  idempotencyIndex.set(idempotencyKey, quoteId);
+
+  return jsonResponse(quote, 201);
+}
+
+async function handleConfirmPayment(ctx: RequestContext) {
+  const quoteId = validateString(ctx.body.quoteId, 'quoteId', 1, 128);
+  const txid = validateString(ctx.body.txid, 'txid', 1, 128);
+
+  const record = quoteStore.get(quoteId);
+  if (!record) {
+    return errorResponse('Unknown quoteId', 404, ctx.requestId);
+  }
+
+  const quote = record.quote;
+  if (new Date(quote.expiresAt as string).getTime() < Date.now()) {
+    return errorResponse('Quote expired', 410, ctx.requestId);
+  }
+
+  if (record.settled && record.receipt) {
+    return jsonResponse(record.receipt);
+  }
+
+  const receipt = {
+    protocol: 'x402',
+    version: '1',
+    quoteId,
+    txid,
+    settled: true,
+    settledAt: new Date().toISOString(),
+    confirmations: 1,
+    amount: quote.amount,
+    asset: quote.asset,
+    payerAddress: quote.payerAddress,
+    payeeAddress: quote.payeeAddress,
+    jobId: quote.jobId,
+    botId: quote.botId,
+  };
+
+  quoteStore.set(quoteId, { ...record, settled: true, txid, receipt });
+
+  // Also record the transaction in DB
+  await ctx.supabase.from('transactions').insert({
+    tx_id: txid,
+    amount: quote.amount as number,
+    asset: quote.asset as string,
+    tx_type: 'x402_quote_payment',
+    status: 'confirmed',
+    metadata: {
+      protocol: 'x402',
+      version: '1',
+      quoteId,
+      jobId: quote.jobId,
+      botId: quote.botId,
+      payerAddress: quote.payerAddress,
+      payeeAddress: quote.payeeAddress,
+    },
+  });
+
+  return jsonResponse(receipt);
+}
+
 // ========== Route Map ==========
 
 const routes = {
@@ -715,6 +844,8 @@ const routes = {
   'pay-invoice': { method: 'POST' as const, handler: handlePayInvoice, rateLimit: 20 },
   'verify-payment': { method: 'GET' as const, handler: handleVerifyPayment, public: true },
   'protocol-info': { method: 'GET' as const, handler: handleProtocolInfo, public: true },
+  'request-quote': { method: 'POST' as const, handler: handleRequestQuote, rateLimit: 30, public: true },
+  'confirm-payment': { method: 'POST' as const, handler: handleConfirmPayment, rateLimit: 20, public: true },
 };
 
 serve(createEdgeHandler('x402-gateway', routes));
