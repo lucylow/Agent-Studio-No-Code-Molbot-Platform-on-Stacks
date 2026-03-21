@@ -2,7 +2,7 @@
 // Centralized CORS, auth, rate limiting, validation, logging, and helpers
 // Import via: import { ... } from "../_shared/utils.ts";
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ========== CORS ==========
 
@@ -228,7 +228,7 @@ export function mockBurnBlockHeight(): number {
 // ========== Request Context ==========
 
 export interface RequestContext {
-  supabase: any;
+  supabase: SupabaseClient;
   userId: string | null;
   body: Record<string, unknown>;
   url: URL;

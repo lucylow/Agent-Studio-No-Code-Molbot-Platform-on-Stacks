@@ -7,6 +7,8 @@ import {
   type RequestContext, ValidationError,
 } from "../_shared/utils.ts";
 
+type SwarmMember = { botId: number; share: number; owner?: string; bondTxId?: string; joinedAt?: string };
+
 // ========== Route Handlers ==========
 
 async function handleListSwarms(ctx: RequestContext) {
@@ -92,11 +94,11 @@ async function handleJoinSwarm(ctx: RequestContext) {
   if (!swarm) return jsonResponse({ error: 'Swarm not found', requestId: ctx.requestId }, 404);
   if (swarm.status !== 'forming') return jsonResponse({ error: 'Swarm is not in forming state', requestId: ctx.requestId }, 400);
 
-  const members = (swarm.members as any[]) || [];
+  const members: SwarmMember[] = Array.isArray(swarm.members) ? (swarm.members as SwarmMember[]) : [];
   if (members.length >= 20) return jsonResponse({ error: 'Swarm is full (max 20 members)', requestId: ctx.requestId }, 400);
-  if (members.some((m: any) => m.botId === botId)) return jsonResponse({ error: 'Bot already in swarm', requestId: ctx.requestId }, 409);
+  if (members.some((m) => m.botId === botId)) return jsonResponse({ error: 'Bot already in swarm', requestId: ctx.requestId }, 409);
 
-  const totalShares = members.reduce((sum: number, m: any) => sum + m.share, 0);
+  const totalShares = members.reduce((sum, m) => sum + m.share, 0);
   if (totalShares + share > 10000) {
     return jsonResponse({ error: `Only ${10000 - totalShares} basis points remaining`, requestId: ctx.requestId }, 400);
   }
@@ -135,9 +137,9 @@ async function handleActivateSwarm(ctx: RequestContext) {
   if (swarm.creator_id !== ctx.userId) return jsonResponse({ error: 'Only creator can activate', requestId: ctx.requestId }, 403);
   if (swarm.status !== 'forming') return jsonResponse({ error: 'Swarm must be in forming state', requestId: ctx.requestId }, 400);
 
-  const members = (swarm.members as any[]) || [];
+  const members: SwarmMember[] = Array.isArray(swarm.members) ? (swarm.members as SwarmMember[]) : [];
   if (members.length < 2) return jsonResponse({ error: 'Need at least 2 members', requestId: ctx.requestId }, 400);
-  const totalShares = members.reduce((sum: number, m: any) => sum + m.share, 0);
+  const totalShares = members.reduce((sum, m) => sum + m.share, 0);
   if (totalShares !== 10000) return jsonResponse({ error: `Shares must total 10000 (currently ${totalShares})`, requestId: ctx.requestId }, 400);
 
   await ctx.supabase.from('swarms').update({ status: 'active' }).eq('id', swarmId);
@@ -167,8 +169,8 @@ async function handleHireSwarm(ctx: RequestContext) {
     metadata: { swarmId, jobId: job.id, protocol: 'x402', clarityContract: 'bot-swarm.hire-swarm', escrow: true },
   });
 
-  const members = (swarm.members as any[]) || [];
-  const splits = members.map((m: any) => ({
+  const members: SwarmMember[] = Array.isArray(swarm.members) ? (swarm.members as SwarmMember[]) : [];
+  const splits = members.map((m) => ({
     botId: m.botId, share: m.share,
     amount: parseFloat(((paymentAmount * m.share) / 10000).toFixed(8)),
     txId: mockTxId(),

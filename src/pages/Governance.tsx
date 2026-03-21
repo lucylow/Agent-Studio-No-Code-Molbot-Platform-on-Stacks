@@ -77,7 +77,7 @@ const Governance = () => {
 
       setProposals((proposalRes.data as Proposal[]) || []);
       setTreasury((treasuryRes.data as TreasuryAsset[]) || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load governance data:", err);
       setError("Failed to load governance data. Please try again.");
     } finally {
@@ -113,7 +113,7 @@ const Governance = () => {
       setShowCreate(false);
       setNewProposal({ title: "", description: "", type: "general", actionAmount: "", actionAsset: "sBTC", actionRecipient: "" });
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getUserFriendlyError(err));
     } finally {
       setCreating(false);
@@ -161,7 +161,7 @@ const Governance = () => {
 
       toast.success(support ? "Voted FOR ✅" : "Voted AGAINST ❌");
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(getUserFriendlyError(err));
     } finally {
       setVotingId(null);

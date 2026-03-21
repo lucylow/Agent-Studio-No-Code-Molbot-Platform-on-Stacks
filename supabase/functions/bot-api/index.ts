@@ -164,7 +164,7 @@ async function handleMyTransactions(ctx: RequestContext) {
   const { limit, offset, page } = parsePagination(ctx.url);
 
   const { data: userBots } = await ctx.supabase.from('bots').select('id').eq('owner_id', ctx.userId);
-  const botIds = (userBots || []).map((b: any) => b.id);
+  const botIds = (userBots || []).map((b: { id: number }) => b.id);
   if (botIds.length === 0) return jsonResponse(paginatedResponse([], 0, page, limit));
 
   const { data, error, count } = await ctx.supabase

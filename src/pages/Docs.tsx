@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import { BookOpen, Zap, DollarSign, FileCode, ChevronRight, Shield, Link2, Activity, Layers, Key, GitBranch, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 
 type Section = {
-  icon: any;
+  icon: LucideIcon;
   title: string;
   tag?: string;
-  content: React.ReactNode;
+  content: ReactNode;
 };
 
 const CodeBlock = ({ code, accent = "primary" }: { code: string; accent?: string }) => (

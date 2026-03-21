@@ -42,8 +42,8 @@ const BotDetail = () => {
         setJobResult(`✅ ${bot.name} completed your request:\n"${prompt.slice(0, 60)}"\n\nResult delivered successfully.`);
         setHireState("complete");
       }, 3000 + Math.random() * 4000);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Request failed");
       setHireState("error");
     }
   };

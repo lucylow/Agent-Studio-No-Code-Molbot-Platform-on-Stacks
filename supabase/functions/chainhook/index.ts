@@ -34,13 +34,13 @@ interface ChainhookBlock {
 
 interface ChainhookTransaction {
   transaction_identifier: { hash: string };
-  operations: any[];
+  operations: unknown[];
   metadata: {
     success: boolean;
     description: string;
     sender: string;
     fee: number;
-    kind: { type: string; data?: any };
+    kind: { type: string; data?: Record<string, unknown> };
     receipt: {
       events: ChainhookEvent[];
     };
@@ -49,7 +49,7 @@ interface ChainhookTransaction {
 
 interface ChainhookEvent {
   type: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 // ========== Predicate Configurations ==========
@@ -82,7 +82,7 @@ async function handleWebhook(ctx: RequestContext) {
   }
 
   let processedEvents = 0;
-  const results: any[] = [];
+  const results: unknown[] = [];
 
   for (const block of payload.apply) {
     const blockHeight = block.block_identifier?.index || mockBlockHeight();
@@ -133,7 +133,7 @@ async function processEvent(
   txId: string,
   blockHeight: number,
   blockHash: string
-): Promise<any | null> {
+): Promise<Record<string, unknown> | null> {
   const eventType = event.type;
   const eventData = event.data || {};
 
@@ -222,7 +222,7 @@ async function handleSimulateEvent(ctx: RequestContext) {
   const blockHeight = mockBlockHeight();
   const burnBlock = mockBurnBlockHeight();
 
-  const simulatedEvents: Record<string, any> = {
+  const simulatedEvents: Record<string, ChainhookEvent> = {
     'x402-payment': {
       type: 'print_event',
       data: {
@@ -377,17 +377,29 @@ async function handleRecentEvents(ctx: RequestContext) {
 
   if (error) throw error;
 
-  const events = (data || []).map((tx: any) => ({
-    txId: tx.tx_id,
-    eventType: tx.tx_type.replace('chainhook_', ''),
-    amount: tx.amount,
-    asset: tx.asset,
-    blockHeight: tx.metadata?.blockHeight,
-    topic: tx.metadata?.topic,
-    timestamp: tx.created_at,
-    fromBotId: tx.from_bot_id,
-    toBotId: tx.to_bot_id,
-  }));
+  const events = (data || []).map((tx: {
+    tx_id: string;
+    tx_type: string;
+    amount: number;
+    asset: string;
+    metadata?: Record<string, unknown>;
+    created_at: string;
+    from_bot_id: number | null;
+    to_bot_id: number | null;
+  }) => {
+    const md = tx.metadata;
+    return {
+      txId: tx.tx_id,
+      eventType: tx.tx_type.replace('chainhook_', ''),
+      amount: tx.amount,
+      asset: tx.asset,
+      blockHeight: md && typeof md.blockHeight === 'number' ? md.blockHeight : undefined,
+      topic: md && typeof md.topic === 'string' ? md.topic : undefined,
+      timestamp: tx.created_at,
+      fromBotId: tx.from_bot_id,
+      toBotId: tx.to_bot_id,
+    };
+  });
 
   return jsonResponse({ events, requestId: ctx.requestId });
 }

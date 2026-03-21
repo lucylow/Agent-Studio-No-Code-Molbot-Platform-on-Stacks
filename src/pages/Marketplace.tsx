@@ -181,7 +181,9 @@ const Marketplace = () => {
     try {
       const { jobId } = await hireBot(bot.id, prompt);
       toast.success(`Hired ${bot.name}`, { description: `Job ${jobId.slice(0, 12)} · ${bot.priceAmount} ${bot.asset} via ${bot.x402Enabled ? "x402" : "USDCx"}` });
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Hire failed");
+    }
   };
 
   return (
@@ -251,7 +253,7 @@ const Marketplace = () => {
               </div>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as "popular" | "rating" | "price")}
                 className="bg-muted/15 border border-border/20 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground focus:outline-none"
               >
                 <option value="popular">Popular</option>

@@ -13,6 +13,25 @@ import {
 
 const FEE_BURN_RATE = 0.02;
 
+type TaskTxRow = {
+  id?: number;
+  asset?: string;
+  from_bot_id?: number;
+  to_bot_id?: number;
+  created_at?: string;
+  metadata?: Record<string, unknown>;
+};
+
+type JobRow = {
+  id: number;
+  status?: string;
+  result?: { taskId?: string; [key: string]: unknown };
+};
+
+function txMeta(tx: TaskTxRow): Record<string, unknown> {
+  return tx.metadata && typeof tx.metadata === "object" ? tx.metadata : {};
+}
+
 // ========== Task State Machine ==========
 // created → escrow_funded → assigned → in_progress → completed → payment_released
 //                                                   → disputed → resolved
@@ -179,15 +198,17 @@ async function handleBidOnTask(ctx: RequestContext) {
     .eq('tx_type', 'task_created')
     .limit(100);
 
-  const taskTx = (taskTxs || []).find((tx: any) => tx.metadata?.taskId === taskId);
+  const taskTx = (taskTxs || []).find((tx: TaskTxRow) => tx.metadata?.taskId === taskId);
   if (!taskTx) return errorResponse('Task not found', 404, ctx.requestId);
 
-  const meta = taskTx.metadata as any;
+  const meta = txMeta(taskTx);
   if (meta.status !== 'escrow_funded') {
-    return errorResponse(`Task is in "${meta.status}" state, cannot accept bids`, 400, ctx.requestId);
+    return errorResponse(`Task is in "${String(meta.status)}" state, cannot accept bids`, 400, ctx.requestId);
   }
-  if (bidAmount > meta.budget) {
-    return errorResponse(`Bid exceeds budget of ${meta.budget} ${meta.asset}`, 400, ctx.requestId);
+  const budget = typeof meta.budget === 'number' ? meta.budget : Number(meta.budget);
+  const asset = typeof meta.asset === 'string' ? meta.asset : 'sBTC';
+  if (bidAmount > budget) {
+    return errorResponse(`Bid exceeds budget of ${budget} ${asset}`, 400, ctx.requestId);
   }
 
   const bid = {
@@ -208,7 +229,7 @@ async function handleBidOnTask(ctx: RequestContext) {
     from_bot_id: providerBotId,
     to_bot_id: taskTx.from_bot_id,
     amount: 0,
-    asset: meta.asset,
+    asset,
     tx_type: 'task_bid',
     status: 'confirmed',
     metadata: {
@@ -222,7 +243,7 @@ async function handleBidOnTask(ctx: RequestContext) {
     success: true,
     requestId: ctx.requestId,
     bid,
-    task: { taskId, title: meta.title, budget: meta.budget, asset: meta.asset },
+    task: { taskId, title: meta.title, budget, asset },
     clarityEvent: {
       topic: 'task-bid-submitted',
       taskId, providerBotId, bidAmount,
@@ -249,11 +270,11 @@ async function handleAcceptBid(ctx: RequestContext) {
     .limit(100);
 
   const bidTx = (bidTxs || []).find(
-    (tx: any) => tx.metadata?.taskId === taskId && tx.metadata?.bidId === bidId
+    (tx: TaskTxRow) => tx.metadata?.taskId === taskId && tx.metadata?.bidId === bidId,
   );
   if (!bidTx) return errorResponse('Bid not found', 404, ctx.requestId);
 
-  const bidMeta = bidTx.metadata as any;
+  const bidMeta = txMeta(bidTx);
   const assignTxId = mockTxId();
   const blockHeight = mockBlockHeight();
 
@@ -261,8 +282,8 @@ async function handleAcceptBid(ctx: RequestContext) {
   await ctx.supabase.from('transactions').insert({
     tx_id: assignTxId,
     from_bot_id: bidTx.to_bot_id, // requester
-    to_bot_id: bidMeta.providerBotId,
-    amount: bidMeta.bidAmount,
+    to_bot_id: bidMeta.providerBotId as number,
+    amount: bidMeta.bidAmount as number,
     asset: bidTx.asset,
     tx_type: 'task_assigned',
     status: 'confirmed',
@@ -270,8 +291,8 @@ async function handleAcceptBid(ctx: RequestContext) {
       protocol: 'x402-task-engine',
       taskId,
       bidId,
-      providerBotId: bidMeta.providerBotId,
-      agreedAmount: bidMeta.bidAmount,
+      providerBotId: bidMeta.providerBotId as number,
+      agreedAmount: bidMeta.bidAmount as number,
       clarityContract: 'payment-router.assign-task',
       blockHeight,
     },
@@ -280,10 +301,10 @@ async function handleAcceptBid(ctx: RequestContext) {
   // Create job record
   await ctx.supabase.from('jobs').insert({
     requester_bot_id: bidTx.to_bot_id,
-    provider_bot_id: bidMeta.providerBotId,
+    provider_bot_id: bidMeta.providerBotId as number,
     requester_user_id: ctx.userId,
     status: 'processing',
-    result: { taskId, bidId, agreedAmount: bidMeta.bidAmount },
+    result: { taskId, bidId, agreedAmount: bidMeta.bidAmount as number },
   });
 
   return jsonResponse({
@@ -291,8 +312,8 @@ async function handleAcceptBid(ctx: RequestContext) {
     requestId: ctx.requestId,
     assignment: {
       taskId, bidId,
-      providerBotId: bidMeta.providerBotId,
-      agreedAmount: bidMeta.bidAmount,
+      providerBotId: bidMeta.providerBotId as number,
+      agreedAmount: bidMeta.bidAmount as number,
       txId: assignTxId,
       blockHeight,
     },
@@ -326,12 +347,12 @@ async function handleCompleteTask(ctx: RequestContext) {
     .limit(100);
 
   const assignTx = (assignTxs || []).find(
-    (tx: any) => tx.metadata?.taskId === taskId && tx.metadata?.providerBotId === providerBotId
+    (tx: TaskTxRow) => tx.metadata?.taskId === taskId && tx.metadata?.providerBotId === providerBotId,
   );
   if (!assignTx) return errorResponse('No assignment found for this task and bot', 404, ctx.requestId);
 
-  const meta = assignTx.metadata as any;
-  const amount = meta.agreedAmount;
+  const meta = txMeta(assignTx);
+  const amount = meta.agreedAmount as number;
   const asset = assignTx.asset;
   const burnAmount = amount * FEE_BURN_RATE;
   const netAmount = amount - burnAmount;
@@ -387,7 +408,7 @@ async function handleCompleteTask(ctx: RequestContext) {
     .eq('status', 'processing')
     .limit(5);
 
-  const job = (jobs || []).find((j: any) => j.result?.taskId === taskId);
+  const job = (jobs || []).find((j: JobRow) => j.result?.taskId === taskId);
   if (job) {
     await ctx.supabase.from('jobs')
       .update({ status: 'completed', payment_tx_id: paymentTxId, result: { ...job.result, resultHash, resultData } })
@@ -445,20 +466,27 @@ async function handleListOpenTasks(ctx: RequestContext) {
     .range(offset, offset + limit - 1);
 
   const openTasks = (taskTxs || [])
-    .filter((tx: any) => tx.metadata?.status === 'escrow_funded')
-    .filter((tx: any) => !skill || (tx.metadata?.requiredSkills || []).includes(skill))
-    .map((tx: any) => ({
-      taskId: tx.metadata.taskId,
-      title: tx.metadata.title,
-      description: tx.metadata.description,
-      requiredSkills: tx.metadata.requiredSkills,
-      budget: tx.metadata.budget,
-      asset: tx.metadata.asset,
-      deadlineBlock: tx.metadata.deadlineBlock,
-      requesterBotId: tx.from_bot_id,
-      escrowTxId: tx.metadata.escrowTxId,
-      createdAt: tx.created_at,
-    }));
+    .filter((tx: TaskTxRow) => txMeta(tx).status === 'escrow_funded')
+    .filter((tx: TaskTxRow) => {
+      if (!skill) return true;
+      const skills = txMeta(tx).requiredSkills;
+      return Array.isArray(skills) && skills.includes(skill);
+    })
+    .map((tx: TaskTxRow) => {
+      const m = txMeta(tx);
+      return {
+        taskId: m.taskId,
+        title: m.title,
+        description: m.description,
+        requiredSkills: m.requiredSkills,
+        budget: m.budget,
+        asset: m.asset,
+        deadlineBlock: m.deadlineBlock,
+        requesterBotId: tx.from_bot_id,
+        escrowTxId: m.escrowTxId,
+        createdAt: tx.created_at,
+      };
+    });
 
   return jsonResponse(paginatedResponse(openTasks, count, page, limit));
 }

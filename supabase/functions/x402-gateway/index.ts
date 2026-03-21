@@ -444,14 +444,15 @@ async function handlePayInvoice(ctx: RequestContext) {
     .limit(50);
 
   const invoiceTx = (invoiceTxs || []).find(
-    (tx: any) => tx.metadata?.invoiceId === invoiceId
+    (tx: { metadata?: Record<string, unknown>; to_bot_id?: number; id?: number }) =>
+      tx.metadata?.invoiceId === invoiceId,
   );
 
   if (!invoiceTx) return errorResponse('Invoice not found or already paid', 404, ctx.requestId);
 
-  const meta = invoiceTx.metadata as any;
-  const amount = meta.requestedAmount;
-  const asset = meta.requestedAsset;
+  const meta = invoiceTx.metadata as Record<string, unknown>;
+  const amount = meta.requestedAmount as number;
+  const asset = meta.requestedAsset as string;
   const receiverBotId = invoiceTx.to_bot_id;
 
   const paymentTxId = mockTxId();
@@ -477,7 +478,7 @@ async function handlePayInvoice(ctx: RequestContext) {
       burnAmount,
       burnRate: FEE_BURN_RATE,
       sender: mockStacksAddress(),
-      receiver: meta.receiverAddress,
+      receiver: meta.receiverAddress as string | undefined,
       clarityContract: 'payment-router.send-x402-payment',
       blockHeight,
       burnBlockHeight: burnBlock,
@@ -516,7 +517,7 @@ async function handlePayInvoice(ctx: RequestContext) {
       requester_user_id: ctx.userId,
       status: 'completed',
       payment_tx_id: paymentTxId,
-      result: { invoiceId, service: meta.service },
+      result: { invoiceId, service: meta.service as string | undefined },
     });
   }
 
@@ -574,7 +575,7 @@ async function handleVerifyPayment(ctx: RequestContext) {
     });
   }
 
-  const meta = tx.metadata as any;
+  const meta = (tx.metadata && typeof tx.metadata === "object" ? tx.metadata : {}) as Record<string, unknown>;
 
   return jsonResponse({
     verified: true,
@@ -590,11 +591,11 @@ async function handleVerifyPayment(ctx: RequestContext) {
       createdAt: tx.created_at,
     },
     onChain: {
-      blockHeight: meta?.blockHeight || mockBlockHeight(),
-      burnBlockHeight: meta?.burnBlockHeight || mockBurnBlockHeight(),
-      clarityContract: meta?.clarityContract || 'unknown',
-      protocol: meta?.protocol || 'x402',
-      bitcoinAnchor: meta?.bitcoinAnchor || mockBitcoinTxId(),
+      blockHeight: (typeof meta.blockHeight === "number" ? meta.blockHeight : mockBlockHeight()),
+      burnBlockHeight: (typeof meta.burnBlockHeight === "number" ? meta.burnBlockHeight : mockBurnBlockHeight()),
+      clarityContract: (typeof meta.clarityContract === "string" ? meta.clarityContract : "unknown"),
+      protocol: (typeof meta.protocol === "string" ? meta.protocol : "x402"),
+      bitcoinAnchor: (typeof meta.bitcoinAnchor === "string" ? meta.bitcoinAnchor : mockBitcoinTxId()),
       proofOfTransfer: {
         verified: true,
         mechanism: 'PoX',
@@ -649,7 +650,7 @@ async function handleProtocolInfo(_ctx: RequestContext) {
 
 // ========== Service Result Generator ==========
 
-function generateServiceResult(service: string, provider: any) {
+function generateServiceResult(service: string, provider: { id: number; name: string }) {
   const lower = service.toLowerCase();
 
   if (lower.includes('image') || lower.includes('art') || lower.includes('chart')) {

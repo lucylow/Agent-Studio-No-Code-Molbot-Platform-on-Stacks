@@ -34,8 +34,8 @@ async function handleGetStats(_ctx: RequestContext) {
     .eq('asset', 'USDCx')
     .eq('status', 'confirmed');
 
-  const totalSbtcVolume = (sbtcTxs || []).reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
-  const totalUsdcxVolume = (usdcxTxs || []).reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
+  const totalSbtcVolume = (sbtcTxs || []).reduce((sum: number, tx: { amount?: number }) => sum + (tx.amount || 0), 0);
+  const totalUsdcxVolume = (usdcxTxs || []).reduce((sum: number, tx: { amount?: number }) => sum + (tx.amount || 0), 0);
 
   return jsonResponse({
     requestId: _ctx.requestId,
@@ -150,15 +150,15 @@ async function handlePayRoyalty(ctx: RequestContext) {
     .limit(100);
 
   const templateTx = (templateTxs || []).find(
-    (tx: any) => tx.metadata?.templateId === templateId
+    (tx: { metadata?: Record<string, unknown> }) => tx.metadata?.templateId === templateId,
   );
 
   if (!templateTx) {
     return jsonResponse({ error: 'Template not found', requestId: ctx.requestId }, 404);
   }
 
-  const meta = templateTx.metadata as any;
-  const royaltyBps = meta.royaltyBps || 500;
+  const meta = templateTx.metadata as Record<string, unknown>;
+  const royaltyBps = (typeof meta.royaltyBps === "number" ? meta.royaltyBps : 500);
   const royaltyAmount = (revenue * royaltyBps) / 10000;
   const txId = mockTxId();
 
@@ -174,7 +174,7 @@ async function handlePayRoyalty(ctx: RequestContext) {
       revenue,
       royaltyBps,
       royaltyAmount,
-      creator: meta.creator,
+      creator: meta.creator as string | undefined,
       clarityContract: 'template-royalties.pay-royalty',
       blockHeight: mockBlockHeight(),
     },
@@ -187,7 +187,7 @@ async function handlePayRoyalty(ctx: RequestContext) {
     royaltyAmount,
     royaltyBps,
     txId,
-    creator: meta.creator,
+    creator: meta.creator as string | undefined,
     clarityEvent: { topic: 'royalty-paid', templateId, royaltyAmount },
     requestId: ctx.requestId,
   });
@@ -201,15 +201,19 @@ async function handleListTemplates(ctx: RequestContext) {
     .order('created_at', { ascending: false })
     .limit(50);
 
-  const templates = (data || []).map((tx: any) => ({
-    templateId: tx.metadata?.templateId,
-    name: tx.metadata?.name,
-    description: tx.metadata?.description,
-    royaltyBps: tx.metadata?.royaltyBps,
-    royaltyPercent: `${((tx.metadata?.royaltyBps || 0) / 100).toFixed(1)}%`,
-    creator: tx.metadata?.creator,
-    createdAt: tx.created_at,
-  }));
+  const templates = (data || []).map((tx: { created_at: string; metadata?: Record<string, unknown> }) => {
+    const m = tx.metadata;
+    const bps = typeof m?.royaltyBps === "number" ? m.royaltyBps : 0;
+    return {
+      templateId: m?.templateId,
+      name: m?.name,
+      description: m?.description,
+      royaltyBps: m?.royaltyBps,
+      royaltyPercent: `${(bps / 100).toFixed(1)}%`,
+      creator: m?.creator,
+      createdAt: tx.created_at,
+    };
+  });
 
   return jsonResponse({ templates, requestId: ctx.requestId });
 }

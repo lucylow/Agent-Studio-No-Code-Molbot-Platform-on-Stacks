@@ -1,12 +1,15 @@
 import { useEffect, useRef } from "react";
+import type { RealtimePostgresChangesPayload } from "@supabase/realtime-js";
 import { supabase } from "@/integrations/supabase/client";
 
 type PostgresEventType = "INSERT" | "UPDATE" | "DELETE";
 
+type RowRecord = Record<string, unknown>;
+
 type PostgresChangesPayload = {
   eventType: PostgresEventType;
-  new?: any;
-  old?: any;
+  new?: RowRecord;
+  old?: RowRecord;
 };
 
 type UseSupabasePostgresChangesArgs = {
@@ -19,6 +22,12 @@ type UseSupabasePostgresChangesArgs = {
   throttleMs?: number;
   onPayload: (payload: PostgresChangesPayload) => void;
 };
+
+function nonEmptyRecord(obj: unknown): RowRecord | undefined {
+  if (!obj || typeof obj !== "object") return undefined;
+  const rec = obj as Record<string, unknown>;
+  return Object.keys(rec).length > 0 ? rec : undefined;
+}
 
 export function useSupabasePostgresChanges({
   channelKey,
@@ -41,11 +50,11 @@ export function useSupabasePostgresChanges({
   useEffect(() => {
     if (!enabled) return;
 
-    const handlePayload = (payload: any) => {
+    const handlePayload = (payload: RealtimePostgresChangesPayload<RowRecord>) => {
       const normalized: PostgresChangesPayload = {
-        eventType: payload.eventType,
-        new: payload.new,
-        old: payload.old,
+        eventType: payload.eventType as PostgresEventType,
+        new: nonEmptyRecord(payload.new),
+        old: nonEmptyRecord(payload.old),
       };
 
       if (!throttleMs) {
@@ -64,17 +73,12 @@ export function useSupabasePostgresChanges({
       }, throttleMs);
     };
 
-    const channelConfig: Record<string, string> = { event: events.join(","), schema, table };
-    if (filter) channelConfig.filter = filter;
+    let channel = supabase.channel(channelKey);
+    for (const ev of events) {
+      channel = channel.on("postgres_changes", { event: ev, schema, table, ...(filter ? { filter } : {}) }, handlePayload);
+    }
 
-    const channel = supabase
-      .channel(channelKey)
-      .on(
-        "postgres_changes" as any,
-        channelConfig as any,
-        handlePayload,
-      )
-      .subscribe();
+    channel.subscribe();
 
     return () => {
       throttleStateRef.current.pendingPayload = null;

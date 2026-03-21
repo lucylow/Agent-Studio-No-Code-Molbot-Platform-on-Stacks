@@ -5,6 +5,7 @@ import {
   Layers, Key, Globe, ArrowRight, Bot, Users, Sparkles,
   GitBranch, Lock, Database, Server, Wallet, Code
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 
@@ -13,7 +14,7 @@ import { Link } from "react-router-dom";
 interface ArchNode {
   id: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   desc: string;
   color: "primary" | "secondary";
   layer: "app" | "protocol" | "chain" | "bitcoin";

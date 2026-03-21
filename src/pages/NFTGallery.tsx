@@ -35,7 +35,7 @@ interface NftToken {
 interface BotData {
   id: number;
   name: string;
-  skills: any;
+  skills: string[];
   price_model: string;
   price_amount: number;
   price_asset: string;
@@ -51,7 +51,7 @@ const NFTGallery = () => {
   const [stats, setStats] = useState({ totalMinted: 0, totalBurned: 0, circulating: 0 });
   const [tab, setTab] = useState<"gallery" | "my-nfts">("gallery");
 
-  const apiCall = async (action: string, method = "GET", body?: any) => {
+  const apiCall = async (action: string, method = "GET", body?: Record<string, unknown>) => {
     const session = await supabase.auth.getSession();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -121,8 +121,8 @@ const NFTGallery = () => {
       setNfts(allNfts || []);
       setMyNfts(myNftsData || []);
       setStats(statsData);
-    } catch (err: any) {
-      toast.error(err.message || "Minting failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Minting failed");
     } finally {
       setMinting(null);
     }
@@ -140,8 +140,8 @@ const NFTGallery = () => {
       setNfts(allNfts || []);
       setMyNfts(myNftsData || []);
       setStats(statsData);
-    } catch (err: any) {
-      toast.error(err.message || "Burn failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Burn failed");
     }
   };
 

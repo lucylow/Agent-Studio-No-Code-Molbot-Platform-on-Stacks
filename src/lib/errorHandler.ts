@@ -26,8 +26,22 @@ const errorMap: Record<string, string> = {
   "UNKNOWN": "Something went wrong. Please try again later.",
 };
 
-export function getUserFriendlyError(error: string | Error): string {
-  const msg = typeof error === "string" ? error : error.message;
+function toErrorMessage(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof (error as { message: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+  return String(error);
+}
+
+export function getUserFriendlyError(error: unknown): string {
+  const msg = toErrorMessage(error);
 
   // Check exact match
   if (errorMap[msg]) return errorMap[msg];

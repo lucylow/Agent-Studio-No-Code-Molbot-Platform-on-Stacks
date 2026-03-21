@@ -19,7 +19,11 @@ const SkillBotCard = ({ bot }: SkillBotCardProps) => {
   const { user } = useAuth();
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ content: string; contentType: string; payment: any } | null>(null);
+  const [result, setResult] = useState<{
+    content: string;
+    contentType: string;
+    payment: { txId: string; amount: number; asset: string };
+  } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
@@ -65,8 +69,8 @@ const SkillBotCard = ({ bot }: SkillBotCardProps) => {
       toast.success("Content generated!", {
         description: `Paid ${data.payment.amount} ${data.payment.asset} via x402`,
       });
-    } catch (err: any) {
-      toast.error(err.message || "Generation failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setLoading(false);
     }

@@ -8,6 +8,7 @@ import {
   Users, Plus, Zap, Bot, Shield, ArrowRight, Loader2,
   AlertCircle, CheckCircle2, Clock, DollarSign,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSupabasePostgresChanges } from "@/hooks/useSupabasePostgresChanges";
 
@@ -29,7 +30,7 @@ interface BotData {
   name: string;
 }
 
-const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
+const statusConfig: Record<string, { icon: LucideIcon; color: string; label: string }> = {
   forming: { icon: Clock, color: "text-yellow-400", label: "Forming" },
   active: { icon: CheckCircle2, color: "text-primary", label: "Active" },
   closed: { icon: AlertCircle, color: "text-muted-foreground", label: "Closed" },
@@ -91,7 +92,7 @@ const Swarms = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       setSwarms((data as unknown as SwarmData[]) || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load swarms:", err);
       toast.error("Failed to load swarms. Please refresh.");
     } finally {
@@ -104,12 +105,12 @@ const Swarms = () => {
       const { data, error } = await supabase.from("bots").select("id, name").eq("owner_id", user!.id);
       if (error) throw error;
       setMyBots((data as BotData[]) || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load bots:", err);
     }
   };
 
-  const apiCall = async (action: string, body?: any) => {
+  const apiCall = async (action: string, body?: Record<string, unknown>) => {
     const session = await supabase.auth.getSession();
     const res = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/swarm-api?action=${action}`,
@@ -142,7 +143,9 @@ const Swarms = () => {
       setShowCreate(false);
       setNewSwarm({ name: "", taskDescription: "", skills: "", minBond: "0.001" });
       loadSwarms();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Create failed");
+    }
     finally { setCreating(false); }
   };
 
@@ -160,7 +163,9 @@ const Swarms = () => {
       setJoiningSwarmId(null);
       setJoinForm({ botId: "", share: "3000" });
       loadSwarms();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Join failed");
+    }
   };
 
   const activateSwarm = async (swarmId: number) => {
@@ -168,7 +173,9 @@ const Swarms = () => {
       await apiCall("activate", { swarmId });
       toast.success("Swarm activated!");
       loadSwarms();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Activate failed");
+    }
   };
 
   const hireSwarm = async (swarm: SwarmData) => {
@@ -178,14 +185,18 @@ const Swarms = () => {
         paymentAmount: 0.01,
       });
       toast.success(`Swarm hired! Payment split among ${result.splits.length} members`, {
-        description: result.splits.map((s: any) => `Bot #${s.botId}: ${s.amount} sBTC`).join(" | "),
+        description: result.splits
+          .map((s: { botId: number; amount: number }) => `Bot #${s.botId}: ${s.amount} sBTC`)
+          .join(" | "),
       });
       loadSwarms();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Hire failed");
+    }
   };
 
-  const getTotalShares = (members: any[]) =>
-    members.reduce((sum: number, m: any) => sum + (m.share || 0), 0);
+  const getTotalShares = (members: SwarmData["members"]) =>
+    members.reduce((sum, m) => sum + (m.share || 0), 0);
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-16">
@@ -306,7 +317,7 @@ const Swarms = () => {
                     </div>
                     {/* Share bar */}
                     <div className="h-2 bg-muted/30 rounded-full overflow-hidden flex">
-                      {members.map((m: any, mi: number) => (
+                      {members.map((m, mi: number) => (
                         <div
                           key={mi}
                           className="h-full"
@@ -319,7 +330,7 @@ const Swarms = () => {
                     </div>
                     {members.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {members.map((m: any, mi: number) => (
+                        {members.map((m, mi: number) => (
                           <span key={mi} className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
                             <Bot className="w-3 h-3" /> #{m.botId}
                             <span className="text-foreground/70">{(m.share / 100).toFixed(1)}%</span>

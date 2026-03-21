@@ -18,7 +18,7 @@ import { SBTC_TO_USD } from "@/types/molbot";
 interface BotData {
   id: number;
   name: string;
-  skills: any;
+  skills: string[];
   price_model: string;
   price_amount: number;
   price_asset: string;
@@ -116,7 +116,9 @@ const Dashboard = ({ initialView = "agents" }: DashboardProps) => {
       setShowCreate(false);
       setNewBot({ name: "", skills: "", priceModel: "fixed", priceAmount: "0.001", priceAsset: "sBTC" });
       loadBots();
-    } catch (err: any) { toast.error(err.message || "Failed to create bot"); }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to create bot");
+    }
     finally { setCreating(false); }
   };
 

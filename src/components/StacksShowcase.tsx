@@ -1,14 +1,23 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import {
-  Zap, DollarSign, Shield, Layers, Activity, Key, GitBranch, Globe,
-  ArrowRight, Check
+  Zap,
+  DollarSign,
+  Shield,
+  Layers,
+  Activity,
+  Key,
+  GitBranch,
+  Globe,
+  ArrowRight,
+  Check,
+  type LucideIcon,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface StacksTech {
   id: string;
-  icon: any;
+  icon: LucideIcon;
   name: string;
   tagline: string;
   detail: string;
